@@ -4,9 +4,11 @@ templ Home() {
     <html>
     <head>
         <title>Home</title>
+        <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
     </head>
     <body>
         <h1>Welcome to the home page</h1>
+        <button hx-get="/load-data" hx-swap="afterend">Load data</button>
     </body>
     </html>
 }

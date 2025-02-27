@@ -1,0 +1,31 @@
+package templs
+
+import (
+    "github.com/Master-Mind/Excel-Replacement-Website/data_loaders"
+)
+
+templ LiftCSVDisplay(workouts []data_loaders.CSVWorkout) {
+    <html>
+    <head>
+        <title>Data Preview</title>
+        <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+    </head>
+    <body>
+        <h1>Data Preview</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                for _, workout := range workouts {
+                <tr>
+                    <td>{ workout.WorkoutDate.String() }</td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </body>
+    </html>
+}
