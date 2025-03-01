@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/Master-Mind/Excel-Replacement-Website/data_loaders"
@@ -14,18 +15,42 @@ import (
 )
 
 func loadDataHandler(w http.ResponseWriter, r *http.Request) {
-	data, err := data_loaders.LoadWeightsSpreadsheet("C:\\Users\\pholl\\source\\legweights.csv", 2022)
+	file, fileheader, err := r.FormFile("file")
 
 	if err != nil {
-		errstr := fmt.Sprintf("Error loading data: %v", err)
+		errstr := fmt.Sprintf("Error getting file: %v", err)
 		fmt.Printf("%s", errstr)
 		http.Error(w, errstr, http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	comp := templs.LiftCSVDisplay(data)
-	comp.Render(r.Context(), w)
+	defer file.Close()
+
+	if strings.Contains(strings.ToLower(fileheader.Filename), "run") {
+		data, err := data_loaders.LoadRunsSpreadsheet(file, 2021)
+
+		if err != nil {
+			errstr := fmt.Sprintf("Error loading data: %v", err)
+			fmt.Printf("%s", errstr)
+			http.Error(w, errstr, http.StatusInternalServerError)
+			return
+		}
+
+		comp := templs.RunCSVDisplay(data)
+		comp.Render(r.Context(), w)
+	} else {
+		data, err := data_loaders.LoadWeightsSpreadsheet(file, 2022)
+
+		if err != nil {
+			errstr := fmt.Sprintf("Error loading data: %v", err)
+			fmt.Printf("%s", errstr)
+			http.Error(w, errstr, http.StatusInternalServerError)
+			return
+		}
+
+		comp := templs.LiftCSVDisplay(data)
+		comp.Render(r.Context(), w)
+	}
 }
 
 func main() {

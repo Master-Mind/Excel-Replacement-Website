@@ -3,7 +3,7 @@ package data_loaders
 import (
 	"encoding/csv"
 	"fmt"
-	"os"
+	"mime/multipart"
 	"regexp"
 	"strconv"
 	"strings"
@@ -21,14 +21,13 @@ type CSVWorkout struct {
 	Sets        []CSVSet
 }
 
-func LoadWeightsSpreadsheet(filePath string, startYear int) ([]CSVWorkout, error) {
-	// Open the spreadsheet file
-	file, err := os.Open(filePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open file: %w", err)
-	}
-	defer file.Close()
+type CSVRun struct {
+	RunDate  time.Time
+	Distance float64
+	Minutes  int
+}
 
+func LoadWeightsSpreadsheet(file multipart.File, startYear int) ([]CSVWorkout, error) {
 	// Parse the CSV file
 	reader := csv.NewReader(file)
 	records, err := reader.ReadAll()
@@ -94,12 +93,39 @@ func LoadWeightsSpreadsheet(filePath string, startYear int) ([]CSVWorkout, error
 					colStarts = append(colStarts, col)
 				} else if records[row][col] == "Adj total" {
 					colEnds = append(colEnds, col)
-				} else if !strings.HasPrefix(records[row][col], "Column") {
+				} else if records[row][col] != "" && !strings.HasPrefix(records[row][col], "Column") {
 					liftTypes = append(liftTypes, records[row][col])
 				}
 			}
 
-			for i := 0; i < len(colStarts); i++ {
+			row++
+
+			for ; row < len(records) && records[row][0] != ""; row++ {
+				for i := 0; i < len(colStarts); i++ {
+					intensity, err := strconv.Atoi(records[row][colStarts[i]])
+
+					if err != nil {
+						continue
+					}
+
+					for j := colStarts[i] + 1; j < colEnds[i]; j++ {
+						if records[row][j] == "" {
+							continue
+						}
+
+						reps, err := strconv.Atoi(records[row][j])
+
+						if err != nil {
+							return nil, fmt.Errorf("failed to parse reps at (%d,%d): %w", row, j, err)
+						}
+
+						curWorkout.Sets = append(curWorkout.Sets, CSVSet{
+							Intensity: intensity,
+							Reps:      reps,
+							SetType:   liftTypes[i],
+						})
+					}
+				}
 			}
 
 			workouts = append(workouts, curWorkout)
@@ -107,4 +133,72 @@ func LoadWeightsSpreadsheet(filePath string, startYear int) ([]CSVWorkout, error
 	}
 
 	return workouts, nil
+}
+
+func LoadRunsSpreadsheet(file multipart.File, startYear int) ([]CSVRun, error) {
+	// Parse the CSV file
+	reader := csv.NewReader(file)
+	records, err := reader.ReadAll()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read CSV: %w", err)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to compile regex: %w", err)
+	}
+
+	//parse my janky ass lifting spreadsheet
+	csvMonth2GoMonth := map[string]time.Month{
+		"Jan": 1,
+		"Feb": 2,
+		"Mar": 3,
+		"Apr": 4,
+		"May": 5,
+		"Jun": 6,
+		"Jul": 7,
+		"Aug": 8,
+		"Sep": 9,
+		"Oct": 10,
+		"Nov": 11,
+		"Dec": 12,
+	}
+
+	curMonth := time.January
+
+	runs := make([]CSVRun, 0)
+
+	for row := 1; row < len(records); row++ {
+		var curRun CSVRun
+		daymonth := strings.Split(records[row][0], "-")
+		day, err := strconv.Atoi(daymonth[0])
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse day: %w", err)
+		}
+
+		month := csvMonth2GoMonth[daymonth[1]]
+
+		if month < curMonth {
+			startYear++
+		}
+
+		curMonth = month
+
+		curRun.RunDate = time.Date(startYear, month, day, 0, 0, 0, 0, time.UTC)
+
+		curRun.Distance, err = strconv.ParseFloat(records[row][1], 64)
+
+		if err != nil {
+			fmt.Printf("Failed to parse distance at %d", row)
+		}
+
+		curRun.Minutes, err = strconv.Atoi(records[row][2])
+
+		if err != nil {
+			fmt.Printf("Failed to parse minutes at %d", row)
+		}
+
+		runs = append(runs, curRun)
+	}
+
+	return runs, nil
 }

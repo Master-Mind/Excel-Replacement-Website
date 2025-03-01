@@ -5,10 +5,18 @@ templ Home() {
     <head>
         <title>Home</title>
         <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+        <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css">
     </head>
     <body>
-        <h1>Welcome to the home page</h1>
-        <button hx-get="/load-data" hx-swap="afterend">Load data</button>
+        <h1>Welcome the home page</h1>
+        <p>pick a file to load</p>
+        <form hx-post="/load-data" hx-encoding="multipart/form-data">
+            <input type="file" id="file" name="file" accept=".csv"/>
+            <label for="startyear">Year that the data starts at</label>
+            <input type="number" id="startyear" name="startyear" value="2021"/>
+            <input type="submit" value="Submit"/>
+        </form>
+        
     </body>
     </html>
 }

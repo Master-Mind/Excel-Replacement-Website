@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-templ LiftCSVDisplay(workouts []data_loaders.CSVWorkout) {
+templ RunCSVDisplay(runs []data_loaders.CSVRun) {
     <html>
     <head>
         <title>Data Preview</title>
@@ -19,21 +19,17 @@ templ LiftCSVDisplay(workouts []data_loaders.CSVWorkout) {
             <thead>
                 <tr>
                     <th>Date</th>
-                    <th>Set Type</th>
-                    <th>Intensity</th>
-                    <th>Reps</th>
+                    <th>Distance</th>
+                    <th>Time</th>
                 </tr>
             </thead>
             <tbody>
-                for _, workout := range workouts {
-                    for _, set := range workout.Sets {
-                        <tr>
-                            <td>{ workout.WorkoutDate.String() }</td>
-                            <td>{ set.SetType }</td>
-                            <td>{ strconv.Itoa(set.Intensity) }</td>
-                            <td>{ strconv.Itoa(set.Reps) }</td>
-                        </tr>
-                    }
+                for _, run := range runs {
+                    <tr>
+                        <td>{ run.RunDate.String() }</td>
+                        <td>{ strconv.FormatFloat(run.Distance, 'f', 2, 64) }</td>
+                        <td>{ strconv.Itoa(run.Minutes) }</td>
+                    </tr>
                 }
             </tbody>
         </table>
