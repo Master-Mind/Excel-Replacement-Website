@@ -143,11 +143,7 @@ func LoadRunsSpreadsheet(file multipart.File, startYear int) ([]CSVRun, error) {
 		return nil, fmt.Errorf("failed to read CSV: %w", err)
 	}
 
-	if err != nil {
-		return nil, fmt.Errorf("failed to compile regex: %w", err)
-	}
-
-	//parse my janky ass lifting spreadsheet
+	//parse my not so janky ass running spreadsheet
 	csvMonth2GoMonth := map[string]time.Month{
 		"Jan": 1,
 		"Feb": 2,

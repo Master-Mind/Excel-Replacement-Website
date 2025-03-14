@@ -29,7 +29,20 @@ func Home() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<html><head><title>Home</title><script src=\"https://unpkg.com/htmx.org@2.0.4\" integrity=\"sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+\" crossorigin=\"anonymous\"></script><link rel=\"stylesheet\" href=\"https://cdn.simplecss.org/simple.min.css\"></head><body><h1>Welcome the home page</h1><p>pick a file to load</p><form hx-post=\"/load-data\" hx-encoding=\"multipart/form-data\"><input type=\"file\" id=\"file\" name=\"file\" accept=\".csv\"> <label for=\"startyear\">Year that the data starts at</label> <input type=\"number\" id=\"startyear\" name=\"startyear\" value=\"2021\"> <input type=\"submit\" value=\"Submit\"></form></body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<html><head><title>Home</title><script src=\"https://unpkg.com/htmx.org@2.0.4\" integrity=\"sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+\" crossorigin=\"anonymous\"></script><link rel=\"stylesheet\" href=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var2 string
+		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(stylesheet)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/home.templ`, Line: 8, Col: 48}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\"></head><body><h1>Welcome the home page</h1><p>pick a file to load</p><form id=\"preview-form\" hx-post=\"/trans-data\" hx-encoding=\"multipart/form-data\" hx-target=\"#data-preview\" hx-swap=\"innerHTML\"><input type=\"file\" id=\"file\" name=\"file\" accept=\".csv\"> <label for=\"startyear\">Year that the data starts at</label> <input type=\"number\" id=\"startyear\" name=\"startyear\" value=\"2021\"> <input type=\"submit\" value=\"Transform\"></form><div id=\"data-preview\"><p>Data will be displayed here</p></div></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
