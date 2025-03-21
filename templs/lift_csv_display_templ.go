@@ -47,7 +47,7 @@ func LiftCSVDisplay(workouts []data_loaders.CSVWorkout) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\"></head><body><h1>Data Preview</h1><p>Make sure that the data looks alright before commiting it to the database</p><table><thead><tr><th>Date</th><th>Set Type</th><th>Intensity</th><th>Reps</th></tr></thead> <tbody>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\"></head><body><div id=\"data-preview\"><h1>Data Preview</h1><p>Make sure that the data looks alright before commiting it to the database</p><table><thead><tr><th>Date</th><th>Set Type</th><th>Intensity</th><th>Reps</th></tr></thead> <tbody>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -60,7 +60,7 @@ func LiftCSVDisplay(workouts []data_loaders.CSVWorkout) templ.Component {
 				var templ_7745c5c3_Var3 string
 				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(workout.WorkoutDate.String())
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/lift_csv_display.templ`, Line: 31, Col: 62}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/lift_csv_display.templ`, Line: 32, Col: 62}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 				if templ_7745c5c3_Err != nil {
@@ -73,7 +73,7 @@ func LiftCSVDisplay(workouts []data_loaders.CSVWorkout) templ.Component {
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(set.SetType)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/lift_csv_display.templ`, Line: 32, Col: 45}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/lift_csv_display.templ`, Line: 33, Col: 45}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
@@ -86,7 +86,7 @@ func LiftCSVDisplay(workouts []data_loaders.CSVWorkout) templ.Component {
 				var templ_7745c5c3_Var5 string
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(set.Intensity))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/lift_csv_display.templ`, Line: 33, Col: 61}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/lift_csv_display.templ`, Line: 34, Col: 61}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -99,7 +99,7 @@ func LiftCSVDisplay(workouts []data_loaders.CSVWorkout) templ.Component {
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(set.Reps))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/lift_csv_display.templ`, Line: 34, Col: 56}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/lift_csv_display.templ`, Line: 35, Col: 56}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
@@ -111,7 +111,7 @@ func LiftCSVDisplay(workouts []data_loaders.CSVWorkout) templ.Component {
 				}
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</tbody></table></body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</tbody></table></div></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

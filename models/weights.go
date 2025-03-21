@@ -8,10 +8,12 @@ import (
 
 type Set struct {
 	gorm.Model
-	Intensity int  `gorm:"not null"`
-	Reps      int  `gorm:"not null"`
-	WorkoutID uint `gorm:"not null"`
-	SetTypeID uint `gorm:"not null"`
+	Intensity int     `gorm:"not null"`
+	Reps      int     `gorm:"not null"`
+	WorkoutID uint    `gorm:"not null"`
+	SetTypeID uint    `gorm:"not null"`
+	SetType   SetType `gorm:"foreignKey:SetTypeID"`
+	Workout   Workout `gorm:"foreignKey:WorkoutID"` // Establishing the relationship with Workout
 }
 
 type Workout struct {

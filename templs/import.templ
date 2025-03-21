@@ -1,25 +1,32 @@
 package templs
 
-templ Home() {
+templ Import() {
     <html>
     <head>
-        <title>Home</title>
+        <title>Import</title>
         <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
         <link rel="stylesheet" href={ stylesheet }>
     </head>
     <body>
         @Nav()
-        <h1>Welcome the home page</h1>
+        <h1>Import</h1>
         <p>pick a file to load</p>
         <form id="preview-form" hx-post="/trans-data" hx-encoding="multipart/form-data" hx-target="#data-preview" hx-swap="innerHTML">
             <input type="file" id="file" name="file" accept=".csv"/>
             <label for="startyear">Year that the data starts at</label>
             <input type="number" id="startyear" name="startyear" value="2021"/>
+            <input type="checkbox" id="is-preview" name="is-preview" checked/>
+            <label for="is-preview">Preview</label>
             <input type="submit" value="Transform"/>
         </form>
         <div id="data-preview">
             <p>Data will be displayed here</p>
         </div>
+        <script>
+            document.addEventListener('htmx:responseError', function(event) {
+                document.getElementById('data-preview').innerHTML = event.detail.xhr.responseText;
+            });
+        </script>
     </body>
     </html>
 }

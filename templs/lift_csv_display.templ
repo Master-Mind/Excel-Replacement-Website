@@ -13,6 +13,7 @@ templ LiftCSVDisplay(workouts []data_loaders.CSVWorkout) {
         <link rel="stylesheet" href={ stylesheet }>
     </head>
     <body>
+        <div id="data-preview">
         <h1>Data Preview</h1>
         <p>Make sure that the data looks alright before commiting it to the database</p>
         <table>
@@ -37,6 +38,7 @@ templ LiftCSVDisplay(workouts []data_loaders.CSVWorkout) {
                 }
             </tbody>
         </table>
+        </div>
     </body>
     </html>
 }

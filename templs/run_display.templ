@@ -1,0 +1,39 @@
+package templs
+
+import (
+    "github.com/Master-Mind/Excel-Replacement-Website/models"
+	"strconv"
+)
+
+templ RunDisplay(runs [] models.Run) {
+    <html>
+    <head>
+        <title>Runs</title>
+        <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+        <link rel="stylesheet" href={ stylesheet }>
+    </head>
+    <body>
+        @Nav()
+        <h1>Runs</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Distance</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                for _, run := range runs {
+                    <tr>
+                        <td>{ run.Date.Format("Mon, 02 Jan 2006") }</td>
+                        <td>{ strconv.FormatFloat(run.Distance, 'f', -1, 64) } miles</td>
+                        <td>{ strconv.FormatInt(int64(run.Minutes), 10) } mins</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </body>
+    </html>
+    
+}

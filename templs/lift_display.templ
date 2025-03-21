@@ -1,0 +1,58 @@
+package templs
+
+import (
+    "github.com/Master-Mind/Excel-Replacement-Website/models"
+    "strconv"
+)
+
+templ LiftDisplay(workouts []models.Workout, settypes []models.SetType) {
+    <html>
+    <head>
+        <title>Workouts</title>
+        <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+        <link rel="stylesheet" href={ stylesheet }>
+        <style>
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+        </style>
+    </head>
+    <body>
+        @Nav()
+        <h1>Workouts</h1>
+            for _, workout := range workouts {
+                <h2>{ workout.Date.Format("Mon, 02 Jan 2006") }</h2>
+                if len(settypes) > 0 {
+                    {{
+                    includedSetType := make([][]models.Set, len(settypes))
+                    for _, set := range workout.Sets {
+                        includedSetType[set.SetType.ID - 1] = append(includedSetType[set.SetType.ID - 1], set)
+                    }
+                }}
+                    for id, sets := range includedSetType {
+                        if len(includedSetType[id]) > 0 {
+                            <h3> {settypes[id].Name}</h3>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Intensity</th>
+                                        <th>Reps</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    for _, set := range sets {
+                                        <tr>
+                                            <td>{ strconv.Itoa(set.Intensity) }</td>
+                                            <td>{ strconv.Itoa(set.Reps) }</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    }
+                }
+            }
+    </body>
+    </html>
+}

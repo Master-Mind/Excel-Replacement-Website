@@ -50,8 +50,11 @@ func Add_WeightDataToDB(db *gorm.DB, data []CSVWorkout) error {
 		{Name: "Lateral Raise", RepUnit: "reps", IntensityUnit: "lbs"},
 		{Name: "Weighted Crunches", RepUnit: "reps", IntensityUnit: "lbs"},
 		{Name: "DB Curl", RepUnit: "reps", IntensityUnit: "lbs"},
+		{Name: "Curl", RepUnit: "reps", IntensityUnit: "lbs"},
 		{Name: "Bench DB Curl", RepUnit: "reps", IntensityUnit: "lbs"},
-		{Name: "Farmer Carry", RepUnit: "secs", IntensityUnit: "lbs"}}
+		{Name: "Farmer Carry", RepUnit: "secs", IntensityUnit: "lbs"},
+		{Name: "Hip Thrusts", RepUnit: "reps", IntensityUnit: "lbs"},
+		{Name: "Jump Squats", RepUnit: "reps", IntensityUnit: "lbs"}}
 
 	if len(setTypes) != len(expectedSetTypes) {
 		for _, expectedSetType := range expectedSetTypes {
@@ -76,6 +79,8 @@ func Add_WeightDataToDB(db *gorm.DB, data []CSVWorkout) error {
 		fmt.Printf("Error finding set types in db: %v", err)
 	}
 
+	fmt.Printf("Found %d set types\n", len(setTypes))
+
 	for i, workout := range data {
 		weights[i] = models.Workout{
 			Date: workout.WorkoutDate,
@@ -92,12 +97,18 @@ func Add_WeightDataToDB(db *gorm.DB, data []CSVWorkout) error {
 			for _, setType := range setTypes {
 				if setType.Name == set.SetType {
 					setType.Sets = append(setType.Sets, weights[i].Sets[j])
+					weights[i].Sets[j].SetType = setType
+					weights[i].Sets[j].SetTypeID = setType.ID
 				}
 			}
 		}
 	}
 
 	if err := db.Create(&weights).Error; err != nil {
+		fmt.Printf("Error adding weights to db: %v", err)
+	}
+
+	if err := db.Save(&setTypes).Error; err != nil {
 		fmt.Printf("Error adding weights to db: %v", err)
 	}
 

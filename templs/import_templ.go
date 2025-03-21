@@ -8,7 +8,7 @@ package templs
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-func Home() templ.Component {
+func Import() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -29,14 +29,14 @@ func Home() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<html><head><title>Home</title><script src=\"https://unpkg.com/htmx.org@2.0.4\" integrity=\"sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+\" crossorigin=\"anonymous\"></script><link rel=\"stylesheet\" href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<html><head><title>Import</title><script src=\"https://unpkg.com/htmx.org@2.0.4\" integrity=\"sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+\" crossorigin=\"anonymous\"></script><link rel=\"stylesheet\" href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(stylesheet)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/home.templ`, Line: 8, Col: 48}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/import.templ`, Line: 8, Col: 48}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -50,7 +50,7 @@ func Home() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<h1>Welcome the home page</h1><p>pick a file to load</p><form id=\"preview-form\" hx-post=\"/trans-data\" hx-encoding=\"multipart/form-data\" hx-target=\"#data-preview\" hx-swap=\"innerHTML\"><input type=\"file\" id=\"file\" name=\"file\" accept=\".csv\"> <label for=\"startyear\">Year that the data starts at</label> <input type=\"number\" id=\"startyear\" name=\"startyear\" value=\"2021\"> <input type=\"submit\" value=\"Transform\"></form><div id=\"data-preview\"><p>Data will be displayed here</p></div></body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<h1>Import</h1><p>pick a file to load</p><form id=\"preview-form\" hx-post=\"/trans-data\" hx-encoding=\"multipart/form-data\" hx-target=\"#data-preview\" hx-swap=\"innerHTML\"><input type=\"file\" id=\"file\" name=\"file\" accept=\".csv\"> <label for=\"startyear\">Year that the data starts at</label> <input type=\"number\" id=\"startyear\" name=\"startyear\" value=\"2021\"> <input type=\"checkbox\" id=\"is-preview\" name=\"is-preview\" checked> <label for=\"is-preview\">Preview</label> <input type=\"submit\" value=\"Transform\"></form><div id=\"data-preview\"><p>Data will be displayed here</p></div><script>\r\n            document.addEventListener('htmx:responseError', function(event) {\r\n                document.getElementById('data-preview').innerHTML = event.detail.xhr.responseText;\r\n            });\r\n        </script></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
