@@ -3,7 +3,22 @@ package templs
 import (
     "github.com/Master-Mind/Excel-Replacement-Website/models"
 	"strconv"
+    "time"
+	"fmt"
 )
+
+templ RunRow(run models.Run) {
+    <tr>
+        <td>{ run.Date.Format("Mon, 02 Jan 2006") }</td>
+        <td>{ strconv.FormatFloat(run.Distance, 'f', -1, 64) } miles</td>
+        <td>{ strconv.FormatInt(int64(run.Minutes), 10) } mins</td>
+        <td>{ strconv.FormatFloat(run.Distance / (float64(run.Minutes) / 60.0), 'f', 2, 64) } mph</td>
+        <td>{ strconv.FormatFloat(float64(run.Minutes) / run.Distance, 'f', 2, 64) } mpm</td>
+        <td>
+            <button hx-delete={fmt.Sprintf("/delete-run?id=%v", run.ID)} hx-target="closest tr" hx-swap="delete">Delete</button>
+        </td>
+    </tr>
+}
 
 templ RunDisplay(runs [] models.Run) {
     <html>
@@ -14,6 +29,16 @@ templ RunDisplay(runs [] models.Run) {
     </head>
     <body>
         @Nav()
+        <p>Record a new run</p>
+        <form id="new-run" hx-post="/new-run" hx-target="tbody" hx-swap="afterbegin">
+            <input type="number" id="distance" name="distance" value="0" step="any"/>
+            <label for="distance">Distance Ran</label>
+            <input type="number" id="minutes" name="minutes" value="0"/>
+            <label for="minutes">Minutes</label>
+            <input type="date" id="date" name="date" value={ (time.Now()).Format("2006-01-02") }/>
+            <label for="date">Date</label>
+            <input type="submit" value="Add Run"/>
+        </form>
         <h1>Runs</h1>
         <table>
             <thead>
@@ -21,15 +46,14 @@ templ RunDisplay(runs [] models.Run) {
                     <th>Date</th>
                     <th>Distance</th>
                     <th>Time</th>
+                    <th>Pace (mph)</th>
+                    <th>Pace (mpm)</th>
+                    <th>Delete</th>
                 </tr>
             </thead>
             <tbody>
                 for _, run := range runs {
-                    <tr>
-                        <td>{ run.Date.Format("Mon, 02 Jan 2006") }</td>
-                        <td>{ strconv.FormatFloat(run.Distance, 'f', -1, 64) } miles</td>
-                        <td>{ strconv.FormatInt(int64(run.Minutes), 10) } mins</td>
-                    </tr>
+                    @RunRow(run)
                 }
             </tbody>
         </table>

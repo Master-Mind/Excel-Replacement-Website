@@ -32,6 +32,8 @@ func main() {
 	http.HandleFunc("/runs", dbhandling.RunHandler)
 	http.HandleFunc("/trans-data", dbhandling.TransformData)
 	http.Handle("/import", templ.Handler(templs.Import()))
+	http.HandleFunc("/new-run", dbhandling.AddRun)
+	http.HandleFunc("/delete-run", dbhandling.RemoveRun)
 
 	server := &http.Server{Addr: ":80"}
 
