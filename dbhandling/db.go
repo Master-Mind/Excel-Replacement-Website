@@ -25,7 +25,7 @@ func InitDB() error {
 		return err
 	}
 
-	err = DB.AutoMigrate(&models.Run{}, &models.Workout{}, &models.Set{}, &models.SetType{})
+	err = DB.AutoMigrate(&models.Run{}, &models.Workout{}, &models.Set{}, &models.SetType{}, &models.Shoe{})
 	if err != nil {
 		fmt.Printf("Error migrating database: %v\n", err)
 		return err
@@ -133,6 +133,15 @@ func RunHandler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("Found %d workouts\n", len(runs))
 
-	comp := templs.RunDisplay(runs)
+	var shoes []models.Shoe
+	err = DB.Order("date_purchased desc").Find(&shoes).Error
+
+	if HandleError(w, r, "Error finding shoes in db: %v", err) {
+		return
+	}
+
+	fmt.Printf("Found %d shoes\n", len(shoes))
+
+	comp := templs.RunDisplay(runs, shoes)
 	comp.Render(r.Context(), w)
 }

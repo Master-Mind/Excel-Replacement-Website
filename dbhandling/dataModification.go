@@ -60,3 +60,60 @@ func RemoveRun(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK) // Send a 200 OK response to indicate success
 }
+
+func NewShoe(w http.ResponseWriter, r *http.Request) {
+	newshoe := models.Shoe{}
+	var err error
+
+	r.ParseForm()
+
+	fmt.Printf("Adding new shoe with data: %v\n", r.Form)
+
+	newshoe.Name = r.Form.Get("name")
+
+	newshoe.MinMilage, err = strconv.Atoi(r.Form.Get("min-milage"))
+	if HandleError(w, r, "Error parsing min milage: %v", err) {
+		return
+	}
+
+	newshoe.MaxMilage, err = strconv.Atoi(r.Form.Get("max-milage"))
+	if HandleError(w, r, "Error parsing max milage: %v", err) {
+		return
+	}
+
+	newshoe.DatePurchased, err = time.Parse("2006-01-02", r.Form.Get("purchase-date"))
+	if HandleError(w, r, "Error parsing date purchased: %v", err) {
+		return
+	}
+
+	if r.Form.Get("retire-date") != "" {
+		newshoe.DateRetired, err = time.Parse("2006-01-02", r.Form.Get("retire-date"))
+		if HandleError(w, r, "Error parsing date retired: %v", err) {
+			return
+		}
+	}
+
+	if err := DB.Create(&newshoe).Error; err != nil {
+		HandleError(w, r, "Error adding shoe to db: %v", err)
+		return
+	}
+
+	comp := templs.ShoeRow(newshoe, 0)
+	comp.Render(r.Context(), w) // Render the component to show the updated list of shoes
+}
+
+func DeleteShoe(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	shoeID, err := strconv.Atoi(r.Form.Get("id"))
+
+	if HandleError(w, r, "Error parsing shoe ID: %v", err) {
+		return
+	}
+
+	if err := DB.Delete(&models.Shoe{}, shoeID).Error; err != nil {
+		HandleError(w, r, "Error deleting shoe from db: %v", err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK) // Send a 200 OK response to indicate success
+}

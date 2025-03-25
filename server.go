@@ -34,6 +34,8 @@ func main() {
 	http.Handle("/import", templ.Handler(templs.Import()))
 	http.HandleFunc("/new-run", dbhandling.AddRun)
 	http.HandleFunc("/delete-run", dbhandling.RemoveRun)
+	http.HandleFunc("/new-shoe", dbhandling.NewShoe)
+	http.HandleFunc("/delete-shoe", dbhandling.DeleteShoe)
 
 	server := &http.Server{Addr: ":80"}
 

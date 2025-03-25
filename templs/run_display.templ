@@ -20,26 +20,109 @@ templ RunRow(run models.Run) {
     </tr>
 }
 
-templ RunDisplay(runs [] models.Run) {
+templ ShoeRow(shoe models.Shoe, shoeMilage float64) {
+    <tr>
+        <td>{ shoe.Name }</td>
+        <td>{ shoe.DatePurchased.Format("Mon, 02 Jan 2006") }</td>
+        <td>{ shoe.DateRetired.Format("Mon, 02 Jan 2006") }</td>
+        <td>{ strconv.FormatInt(int64(shoe.MinMilage), 10) } miles</td>
+        <td>{ strconv.FormatInt(int64(shoe.MaxMilage), 10) } miles</td>
+        <td>{ strconv.FormatFloat(shoeMilage, 'f', -1, 64) } miles</td>
+        <td>
+            <button hx-delete={fmt.Sprintf("/delete-shoe?id=%v", shoe.ID)} hx-target="closest tr" hx-swap="delete">Delete</button>
+        </td>
+    </tr>
+}
+
+templ RunDisplay(runs [] models.Run, shoes [] models.Shoe) {
     <html>
     <head>
         <title>Runs</title>
         <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
         <link rel="stylesheet" href={ stylesheet }>
+        <style>
+            .form-group {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .form-group label {
+                margin-right: 5px;
+            }
+        </style>
     </head>
     <body>
         @Nav()
-        <p>Record a new run</p>
-        <form id="new-run" hx-post="/new-run" hx-target="tbody" hx-swap="afterbegin">
-            <input type="number" id="distance" name="distance" value="0" step="any"/>
-            <label for="distance">Distance Ran</label>
-            <input type="number" id="minutes" name="minutes" value="0"/>
-            <label for="minutes">Minutes</label>
-            <input type="date" id="date" name="date" value={ (time.Now()).Format("2006-01-02") }/>
-            <label for="date">Date</label>
-            <input type="submit" value="Add Run"/>
+        <h2>Shoes</h2>
+        <form id="new-shoe" hx-post="/new-shoe" hx-target="next tbody" hx-swap="afterbegin">
+        <div class="form-group">
+            <label for="name">Shoe Name</label>
+            <input type="text" id="name" name="name" value="" />
+            <label for="purchase-date">Date Purchased</label>
+            <input type="date" id="purchase-date" name="purchase-date" value={ (time.Now()).Format("2006-01-02")}/>
+            <label for="retire-date">Date Retired</label>
+            <input type="date" id="retire-date" name="retire-date" value=""/>
+        </div>
+        <div class="form-group">
+            <label for="min-milage">Min Milage</label>
+            <input type="number" id="min-milage" name="min-milage" value="300"/>
+            <label for="max-milage">Max Milage</label>
+            <input type="number" id="max-milage" name="max-milage" value="500"/>
+            <input type="submit" value="Add Shoe"/>
+        </div>
         </form>
-        <h1>Runs</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Shoe Name</th>
+                    <th>Date Purchased</th>
+                    <th>Date Retired</th>
+                    <th>Min Milage</th>
+                    <th>Max Milage</th>
+                    <th>Milage</th>
+                    <th>Delete</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{
+                    shoeMileages := make([]float64, len(shoes))
+                    i := len(shoes) - 1
+
+                    for j := len(runs) - 1; j >= 0; j-- {
+                        run := runs[j]
+                        if shoes[i].DateRetired.IsZero() || run.Date.Before(shoes[i].DateRetired) {
+                            shoeMileages[i] += run.Distance
+                        } else {
+                            i--;
+                            j++; //avoid skipping a run
+
+                            if i < 0 {
+                                break
+                            }
+
+                            fmt.Printf("i: %v, run date %s, shoe date %s\n", i, run.Date.String(), shoes[i].DateRetired.String())
+                        }
+                    }
+                }}
+                for i, shoe := range shoes {
+                    @ShoeRow(shoe, shoeMileages[i])
+                }
+            </tbody>
+        </table>
+
+        <h2>Record a new run</h2>
+        <form id="new-run" hx-post="/new-run" hx-target="next tbody" hx-swap="afterbegin">
+        <div class="form-group">
+            <label for="distance">Distance Ran</label>
+            <input type="number" id="distance" name="distance" value="0" step="any"/>
+            <label for="minutes">Minutes</label>
+            <input type="number" id="minutes" name="minutes" value="0"/>
+            <label for="date">Date</label>
+            <input type="date" id="date" name="date" value={ (time.Now()).Format("2006-01-02") }/>
+            <input type="submit" value="Add Run"/>
+        </div>
+        </form>
+        <h2>Runs</h2>
         <table>
             <thead>
                 <tr>
