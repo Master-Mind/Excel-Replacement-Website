@@ -36,6 +36,12 @@ func main() {
 	http.HandleFunc("/delete-run", dbhandling.RemoveRun)
 	http.HandleFunc("/new-shoe", dbhandling.NewShoe)
 	http.HandleFunc("/delete-shoe", dbhandling.DeleteShoe)
+	http.HandleFunc("/delete-set", dbhandling.DeletSet)
+	http.HandleFunc("/delete-workout", dbhandling.DeleteWorkout)
+	http.HandleFunc("/new-workout", dbhandling.CreateWorkout)
+	http.HandleFunc("/new-set", dbhandling.AddSet)
+	http.Handle("/diet", templ.Handler(templs.Diet()))
+	http.HandleFunc("/transform-nut", dbhandling.AddNutritionData)
 
 	server := &http.Server{Addr: ":80"}
 

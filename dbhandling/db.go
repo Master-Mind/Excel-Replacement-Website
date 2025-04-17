@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/Master-Mind/Excel-Replacement-Website/data_loaders"
@@ -15,6 +16,7 @@ import (
 )
 
 var DB *gorm.DB
+var NutritionDB *gorm.DB //seperate because there's much, MUCH more data since it's pulling from the USDA database
 
 func InitDB() error {
 	var err error
@@ -26,8 +28,23 @@ func InitDB() error {
 	}
 
 	err = DB.AutoMigrate(&models.Run{}, &models.Workout{}, &models.Set{}, &models.SetType{}, &models.Shoe{})
+
 	if err != nil {
 		fmt.Printf("Error migrating database: %v\n", err)
+		return err
+	}
+
+	NutritionDB, err = gorm.Open(sqlite.Open(os.Getenv("NUTDBSTR")), &gorm.Config{})
+
+	if err != nil {
+		fmt.Printf("Error opening nutrition database: %v\n", err)
+		return err
+	}
+
+	err = NutritionDB.AutoMigrate(&models.Food{}, &models.FoodNutrient{}, &models.Nutrient{})
+
+	if err != nil {
+		fmt.Printf("Error migrating nutrition database: %v\n", err)
 		return err
 	}
 
@@ -56,8 +73,14 @@ func TransformData(w http.ResponseWriter, r *http.Request) {
 
 	defer file.Close()
 
+	startYear, err := strconv.Atoi(r.FormValue("startyear"))
+
+	if HandleError(w, r, "Error parsing start year: %v", err) {
+		return
+	}
+
 	if strings.Contains(strings.ToLower(fileheader.Filename), "run") {
-		data, err := data_loaders.LoadRunsSpreadsheet(file, 2021)
+		data, err := data_loaders.LoadRunsSpreadsheet(file, startYear)
 
 		if HandleError(w, r, "Error loading data: %v", err) {
 			return
@@ -77,7 +100,7 @@ func TransformData(w http.ResponseWriter, r *http.Request) {
 		comp := templs.RunCSVDisplay(data)
 		comp.Render(r.Context(), w)
 	} else {
-		data, err := data_loaders.LoadWeightsSpreadsheet(file, 2022)
+		data, err := data_loaders.LoadWeightsSpreadsheet(file, startYear)
 
 		if HandleError(w, r, "Error loading data: %v", err) {
 			return
@@ -144,4 +167,12 @@ func RunHandler(w http.ResponseWriter, r *http.Request) {
 
 	comp := templs.RunDisplay(runs, shoes)
 	comp.Render(r.Context(), w)
+}
+
+func AddNutritionData(w http.ResponseWriter, r *http.Request) {
+	err := data_loaders.TransformNutritionData(NutritionDB)
+
+	if HandleError(w, r, "Error transforming nutrition data: %v", err) {
+		return
+	}
 }

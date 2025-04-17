@@ -3,7 +3,77 @@ package templs
 import (
     "github.com/Master-Mind/Excel-Replacement-Website/models"
     "strconv"
+    "time"
 )
+
+templ LiftRow(set models.Set) {
+    <tr>
+        <td>{ strconv.FormatInt(int64(set.Intensity), 10) }</td>
+        <td>{ strconv.FormatInt(int64(set.Reps), 10) }</td>
+        <td>
+            <button hx-delete={ "/delete-set?id=" + strconv.FormatUint(uint64(set.ID), 10) } hx-target="closest tr" hx-swap="delete">Delete</button>
+        </td>
+    </tr>
+}
+
+templ WorkoutDisplay(workout models.Workout, settypes []models.SetType) {
+    <div>
+    <h2>{ workout.Date.Format("Mon, 02 Jan 2006") }</h2>
+    <button hx-delete={ "/delete-workout?id=" + strconv.FormatUint(uint64(workout.ID), 10) } hx-target="closest div" hx-swap="delete">Delete</button>
+
+//can't get the set type at generate time, so we'll have to just append it to the start of the workout
+//pretty jank tbh :/
+    <form id="new-set" hx-post="/new-set" hx-target="next div" hx-swap="afterbegin">
+        <div class="form-group">
+            <label for="set-type">Set Type</label>
+            <select id="set-type" name="set-type">
+                for _, settype := range settypes {
+                    <option value={ strconv.FormatUint(uint64(settype.ID), 10) }>{ settype.Name }</option>
+                }
+            </select>
+            <label for="intensity">Intensity</label>
+            <input type="number" id="intensity" name="intensity" value="" />
+            <label for="reps">Reps</label>
+            <input type="number" id="reps" name="reps" value="" />
+            <input type="hidden" name="workout-id" value={ strconv.FormatUint(uint64(workout.ID), 10) } />
+        <button type="submit" hx-post="/new-set" hx-target="next div" hx-swap="afterbegin">Add Set</button>
+        </div>
+    </form>
+    if len(settypes) > 0 {
+        {{
+        includedSetType := make([][]models.Set, len(settypes))
+        for _, set := range workout.Sets {
+            includedSetType[set.SetType.ID - 1] = append(includedSetType[set.SetType.ID - 1], set)
+        }
+    }}
+        for id, sets := range includedSetType {
+            if len(includedSetType[id]) > 0 {
+                <h3> {settypes[id].Name}</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Intensity</th>
+                            <th>Reps</th>
+                            <th>Delete</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        for _, set := range sets {
+                            <tr>
+                                <td>{ strconv.Itoa(set.Intensity) }</td>
+                                <td>{ strconv.Itoa(set.Reps) }</td>
+                                <td>
+                                    <button hx-delete={ "/delete-set?id=" + strconv.FormatUint(uint64(set.ID), 10) } hx-target="closest tr" hx-swap="delete">Delete</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        }
+    }
+    </div>
+}
 
 templ LiftDisplay(workouts []models.Workout, settypes []models.SetType) {
     <html>
@@ -16,43 +86,35 @@ templ LiftDisplay(workouts []models.Workout, settypes []models.SetType) {
                 width: 100%;
                 border-collapse: collapse;
             }
+            .form-group {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .form-group label {
+                margin-right: 5px;
+            }
+            .form-group input, .form-group select {
+                width: 160px; /* Adjust the width as needed */
+                padding: 5px;
+            }
         </style>
     </head>
     <body>
         @Nav()
         <h1>Workouts</h1>
-            for _, workout := range workouts {
-                <h2>{ workout.Date.Format("Mon, 02 Jan 2006") }</h2>
-                if len(settypes) > 0 {
-                    {{
-                    includedSetType := make([][]models.Set, len(settypes))
-                    for _, set := range workout.Sets {
-                        includedSetType[set.SetType.ID - 1] = append(includedSetType[set.SetType.ID - 1], set)
-                    }
-                }}
-                    for id, sets := range includedSetType {
-                        if len(includedSetType[id]) > 0 {
-                            <h3> {settypes[id].Name}</h3>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Intensity</th>
-                                        <th>Reps</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    for _, set := range sets {
-                                        <tr>
-                                            <td>{ strconv.Itoa(set.Intensity) }</td>
-                                            <td>{ strconv.Itoa(set.Reps) }</td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        }
-                    }
-                }
-            }
+        <form id="new-set" hx-post="/new-workout" hx-target="next div" hx-swap="afterbegin">
+            <div class="form-group">
+                <label for="workout-date">Workout Date</label>
+                <input type="date" id="workout-date" name="workout-date" value={ (time.Now()).Format("2006-01-02")}/>
+                <button type="submit">Add Workout</button>
+            </div>
+        </form>
+        <div>
+        for _, workout := range workouts {
+            @WorkoutDisplay(workout, settypes)
+        }
+        </div>
     </body>
     </html>
 }
