@@ -145,11 +145,36 @@ func WorkoutHandler(w http.ResponseWriter, r *http.Request) {
 	comp.Render(r.Context(), w)
 }
 
+const limit = 30 // Set a limit for the number of runs to display
+
+func RunPage(w http.ResponseWriter, r *http.Request) {
+	// Get the workout data from the database
+	var runs []models.Run
+	var err error
+
+	startDate := r.URL.Query().Get("date")
+
+	if startDate == "" {
+		fmt.Print("Date not provided, using default start ID\n")
+		return
+	}
+
+	DB.Order("Date desc").Where("Date < ?", startDate).Limit(limit).Find(&runs)
+	if HandleError(w, r, "Error finding workouts in db: %v", err) {
+		return
+	}
+
+	fmt.Printf("Found %d runs before %s\n", len(runs), startDate)
+
+	comp := templs.RunPage(runs)
+	comp.Render(r.Context(), w)
+}
+
 func RunHandler(w http.ResponseWriter, r *http.Request) {
 	// Get the workout data from the database
 	var runs []models.Run
 
-	err := DB.Order("Date desc").Find(&runs).Error
+	err := DB.Order("Date desc").Limit(limit).Find(&runs).Error
 	if HandleError(w, r, "Error finding workouts in db: %v", err) {
 		return
 	}

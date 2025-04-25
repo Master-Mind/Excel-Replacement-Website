@@ -77,6 +77,11 @@ func TransformNutritionData(nutdb *gorm.DB) error {
 
 			nut, hasNut := nutrientMap[nutrientName]
 
+			// Energy has two entries, one for kcal and one for kJ. We only want kcal.
+			if nutrientName == "Energy" && nutrientUnit != "kcal" {
+				continue
+			}
+
 			if !hasNut {
 				nut = models.Nutrient{
 					Name:   nutrientName,

@@ -7,8 +7,7 @@ import (
 	"fmt"
 )
 
-templ RunRow(run models.Run) {
-    <tr>
+templ RunColumns(run models.Run) {
         <td>{ run.Date.Format("Mon, 02 Jan 2006") }</td>
         <td>{ strconv.FormatFloat(run.Distance, 'f', -1, 64) } miles</td>
         <td>{ strconv.FormatInt(int64(run.Minutes), 10) } mins</td>
@@ -17,7 +16,26 @@ templ RunRow(run models.Run) {
         <td>
             <button hx-delete={fmt.Sprintf("/delete-run?id=%v", run.ID)} hx-target="closest tr" hx-swap="delete">Delete</button>
         </td>
-    </tr>
+}
+
+templ RunRow(run models.Run, lastOfPage bool) {
+    if lastOfPage {
+        <tr hx-get={fmt.Sprintf("/run-page?date=%v", run.Date)} hx-trigger="revealed" hx-swap="afterend">
+            @RunColumns(run)
+        </tr>
+    } else {
+        <tr>
+            @RunColumns(run)
+        </tr>
+    }
+}
+
+templ RunPage(runs []models.Run) {
+    for i := 0; i < len(runs) - 1; i++ {
+        @RunRow(runs[i], false)
+    }
+
+    @RunRow(runs[len(runs) - 1], true)
 }
 
 templ ShoeRow(shoe models.Shoe, shoeMilage float64) {
@@ -135,9 +153,7 @@ templ RunDisplay(runs [] models.Run, shoes [] models.Shoe) {
                 </tr>
             </thead>
             <tbody>
-                for _, run := range runs {
-                    @RunRow(run)
-                }
+                @RunPage(runs)
             </tbody>
         </table>
     </body>

@@ -1,6 +1,22 @@
 package templs
 
-templ Diet() {
+templ FoodSearchBar() {
+    <label for="food-search">Search for food:</label>
+    <input type="search" 
+        id="food-search" 
+        name="food-search" 
+        list="food-recomendations" 
+        placeholder="Enter food name...">
+    <button hx-get="/search-food" hx-target="#search-results">Search</button>
+    <datalist id="food-recomendations">
+        <!-- Options will be populated dynamically -->
+        <option value="Apple"></option>
+        <option value="Banana"></option>
+        <option value="Carrot"></option>
+    </datalist>
+}
+
+templ Diet(dbloaded bool) {
     <html>
     <head>
         <title>Diet</title>
@@ -11,7 +27,11 @@ templ Diet() {
         @Nav()
         <h1>Diet</h1>
         <p>Welcome to the diet page!</p>
-        <button hx-post="/transform-nut">Load data from USDA database</button>
+        if dbloaded {
+            @FoodSearchBar()
+        } else {
+            <button hx-post="/transform-nut">Load data from USDA database</button>
+        }
     </body>
     </html>
 }

@@ -13,6 +13,15 @@ import (
 	"github.com/joho/godotenv"
 )
 
+func rootHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("%s %s\n", r.Method, r.URL.Path)
+
+	if r.URL.Path == "/" {
+		dbhandling.WorkoutHandler(w, r)
+		return
+	}
+}
+
 func main() {
 	err := godotenv.Load()
 
@@ -28,8 +37,9 @@ func main() {
 		return
 	}
 
-	http.HandleFunc("/", dbhandling.WorkoutHandler)
+	http.HandleFunc("/", rootHandler)
 	http.HandleFunc("/runs", dbhandling.RunHandler)
+	http.HandleFunc("/run-page", dbhandling.RunPage)
 	http.HandleFunc("/trans-data", dbhandling.TransformData)
 	http.Handle("/import", templ.Handler(templs.Import()))
 	http.HandleFunc("/new-run", dbhandling.AddRun)
@@ -40,7 +50,7 @@ func main() {
 	http.HandleFunc("/delete-workout", dbhandling.DeleteWorkout)
 	http.HandleFunc("/new-workout", dbhandling.CreateWorkout)
 	http.HandleFunc("/new-set", dbhandling.AddSet)
-	http.Handle("/diet", templ.Handler(templs.Diet()))
+	http.HandleFunc("/diet", dbhandling.DietPageHandler)
 	http.HandleFunc("/transform-nut", dbhandling.AddNutritionData)
 
 	server := &http.Server{Addr: ":80"}

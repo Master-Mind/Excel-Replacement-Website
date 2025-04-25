@@ -41,7 +41,7 @@ func AddRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	comp := templs.RunRow(newrun)
+	comp := templs.RunRow(newrun, false)
 	comp.Render(r.Context(), w) // Render the component to show the updated list of runs
 }
 
