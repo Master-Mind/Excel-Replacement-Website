@@ -1,19 +1,27 @@
 package templs
 
+import "github.com/Master-Mind/Excel-Replacement-Website/models"
+
+templ FoodRecList(foodRecs []models.Food) {
+    <datalist id="food-recomendations">
+        for _, food := range foodRecs {
+            <option value={ food.Description }></option>
+        }
+    </datalist>
+}
+
 templ FoodSearchBar() {
     <label for="food-search">Search for food:</label>
     <input type="search" 
         id="food-search" 
         name="food-search" 
         list="food-recomendations" 
-        placeholder="Enter food name...">
+        placeholder="Enter food name..."
+        hx-post="/recommend-food"
+        hx-target="#food-recomendations"
+        hx-trigger="keyup changed delay:500ms">
     <button hx-get="/search-food" hx-target="#search-results">Search</button>
-    <datalist id="food-recomendations">
-        <!-- Options will be populated dynamically -->
-        <option value="Apple"></option>
-        <option value="Banana"></option>
-        <option value="Carrot"></option>
-    </datalist>
+    @FoodRecList([]models.Food{})
 }
 
 templ Diet(dbloaded bool) {

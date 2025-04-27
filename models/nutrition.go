@@ -6,9 +6,8 @@ import (
 
 type Food struct {
 	gorm.Model
-	Description  string         `gorm:"not null"`
-	Nutrients    []FoodNutrient `gorm:"foreignKey:FoodID"`
-	PortionGrams float64        `gorm:"not null"`
+	Description string         `gorm:"not null"`
+	Nutrients   []FoodNutrient `gorm:"foreignKey:FoodID"`
 }
 
 type FoodNutrient struct {
@@ -24,7 +23,7 @@ type Nutrient struct {
 	gorm.Model
 	Name       string `gorm:"not null"`
 	DVUnit     string `gorm:"not null"`
-	DailyValue uint   `gorm:"not null"`
+	DailyValue uint
 }
 
 type Recipe struct {

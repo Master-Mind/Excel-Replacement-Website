@@ -52,6 +52,7 @@ func main() {
 	http.HandleFunc("/new-set", dbhandling.AddSet)
 	http.HandleFunc("/diet", dbhandling.DietPageHandler)
 	http.HandleFunc("/transform-nut", dbhandling.AddNutritionData)
+	http.HandleFunc("/recommend-food", dbhandling.FoodRecomendationHandler)
 
 	server := &http.Server{Addr: ":80"}
 

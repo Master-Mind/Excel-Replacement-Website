@@ -68,12 +68,19 @@ func TransformNutritionData(nutdb *gorm.DB) error {
 
 		for _, nutrient := range foodNutrients {
 			nutrientItem := nutrient.(map[string]interface{})
-
-			nutrientAmount := nutrientItem["amount"].(float64)
 			nutrientInfo := nutrientItem["nutrient"].(map[string]interface{})
 
 			nutrientName := nutrientInfo["name"].(string)
 			nutrientUnit := nutrientInfo["unitName"].(string)
+
+			//fmt.Printf("Processing nutrient: %s (%s)\n", nutrientName, nutrientUnit)
+
+			if nutrientItem["amount"] == nil {
+				//fmt.Printf("Nutrient amount is nil for %s\n", nutrientName)
+				continue
+			}
+
+			nutrientAmount := nutrientItem["amount"].(float64)
 
 			nut, hasNut := nutrientMap[nutrientName]
 
@@ -109,7 +116,7 @@ func TransformNutritionData(nutdb *gorm.DB) error {
 		foods = append(foods, newFood)
 	}
 
-	nutdb.Create(&foods)
+	nutdb.CreateInBatches(&foods, 10)
 
 	return nil
 }
