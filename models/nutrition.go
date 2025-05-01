@@ -26,16 +26,24 @@ type Nutrient struct {
 	DailyValue uint
 }
 
+type Ingredient struct {
+	gorm.Model
+	FoodToUse Food    `gorm:"foreignKey:FoodID"`
+	FoodID    uint    `gorm:"not null"`
+	AmountG   float64 `gorm:"not null"` // Amount in grams
+	RecipeID  uint    `gorm:"not null"` // Foreign key to Recipe
+}
+
 type Recipe struct {
 	gorm.Model
-	Name        string `gorm:"not null"`
-	Ingredients []Food `gorm:"many2many:recipe_ingredients"`
+	Name        string       `gorm:"not null"`
+	Ingredients []Ingredient `gorm:"foreignKey:RecipeID"`
 }
 
 type DietDay struct {
 	gorm.Model
 	Name  string   `gorm:"not null"`
-	Meals []Recipe `gorm:"foreignKey:DietDayID"`
+	Meals []Recipe `gorm:"many2many:diet_day_meals"` // Meals for the day, e.g., breakfast, lunch, dinner
 	Foods []Food   `gorm:"many2many:diet_day_foods"` // in addition to meals, in case there are snacks or other foods
 }
 

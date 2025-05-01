@@ -27,7 +27,8 @@ func InitDB() error {
 		return err
 	}
 
-	err = DB.AutoMigrate(&models.Run{}, &models.Workout{}, &models.Set{}, &models.SetType{}, &models.Shoe{})
+	err = DB.AutoMigrate(&models.Run{}, &models.Workout{}, &models.Set{},
+		&models.SetType{}, &models.Shoe{})
 
 	if err != nil {
 		fmt.Printf("Error migrating database: %v\n", err)
@@ -41,7 +42,9 @@ func InitDB() error {
 		return err
 	}
 
-	err = NutritionDB.AutoMigrate(&models.Food{}, &models.FoodNutrient{}, &models.Nutrient{})
+	err = NutritionDB.AutoMigrate(&models.Food{}, &models.FoodNutrient{}, &models.Nutrient{},
+		&models.Ingredient{}, &models.Recipe{}, &models.DietDay{},
+		&models.Person{})
 
 	if err != nil {
 		fmt.Printf("Error migrating nutrition database: %v\n", err)
