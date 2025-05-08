@@ -45,12 +45,22 @@ func DietPageHandler(w http.ResponseWriter, r *http.Request) {
 
 	var recipes []models.Recipe
 
-	if err := NutritionDB.Preload("Ingredients.FoodToUse").Find(&recipes).Error; err != nil {
+	if err := NutritionDB.Preload("Ingredients").
+		Preload("Ingredients.FoodToUse").
+		Preload("Ingredients.FoodToUse.Nutrients").
+		Preload("Ingredients.FoodToUse.Nutrients.Nutrient").
+		Find(&recipes).Error; err != nil {
 		HandleError(w, r, "Error finding recipes: %v\n", err)
 		return
 	}
 
-	comp := templs.Diet(recipes, len(foods) > 0)
+	var nutrients []models.Nutrient
+	if err := NutritionDB.Find(&nutrients).Error; err != nil {
+		HandleError(w, r, "Error finding nutrients: %v\n", err)
+		return
+	}
+
+	comp := templs.Diet(recipes, nutrients, len(foods) > 0)
 
 	if err := comp.Render(r.Context(), w); err != nil {
 		fmt.Printf("Error rendering diet page: %v\n", err)
@@ -72,9 +82,15 @@ func AddRecipe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var nutrients []models.Nutrient
+	if err := NutritionDB.Find(&nutrients).Error; err != nil {
+		HandleError(w, r, "Error finding nutrients: %v\n", err)
+		return
+	}
+
 	fmt.Printf("Created new recipe: %s\n", recipe.Name)
 
-	comp := templs.RecipeDisplay(recipe)
+	comp := templs.RecipeDisplay(recipe, nutrients)
 	if err := comp.Render(r.Context(), w); err != nil {
 		fmt.Printf("Error rendering recipe display: %v\n", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

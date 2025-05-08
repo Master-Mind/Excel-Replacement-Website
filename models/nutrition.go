@@ -12,11 +12,12 @@ type Food struct {
 
 type FoodNutrient struct {
 	gorm.Model
-	FoodID     uint     `gorm:"not null"`
-	NutrientID uint     `gorm:"not null"`
-	Nutrient   Nutrient `gorm:"foreignKey:NutrientID"`
-	Amount     float64  `gorm:"not null"`
-	Unit       string   `gorm:"not null"`
+	FoodID     uint `gorm:"not null"`
+	FoodToUse  Food `gorm:"foreignKey:FoodID;references:ID"`
+	NutrientID uint `gorm:"not null"`
+	Nutrient   Nutrient
+	Amount     float64 `gorm:"not null"`
+	Unit       string  `gorm:"not null"`
 }
 
 type Nutrient struct {
@@ -28,8 +29,8 @@ type Nutrient struct {
 
 type Ingredient struct {
 	gorm.Model
-	FoodToUse Food    `gorm:"foreignKey:FoodID"`
 	FoodID    uint    `gorm:"not null"`
+	FoodToUse Food    `gorm:"foreignKey:FoodID;references:ID"`
 	AmountG   float64 `gorm:"not null"` // Amount in grams
 	RecipeID  uint    `gorm:"not null"` // Foreign key to Recipe
 }

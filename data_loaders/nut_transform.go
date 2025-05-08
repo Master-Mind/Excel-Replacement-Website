@@ -94,9 +94,11 @@ func TransformNutritionData(nutdb *gorm.DB) error {
 					Name:   nutrientName,
 					DVUnit: nutrientUnit,
 				}
+				if err := nutdb.Where("name = ? AND dv_unit = ?", nutrientName, nutrientUnit).FirstOrCreate(&nut).Error; err != nil {
+					fmt.Printf("Error creating/finding nutrient: %v\n", err)
+					continue
+				}
 				nutrientMap[nutrientName] = nut
-
-				nutdb.Create(&nut)
 			}
 
 			amountNum := float64(nutrientAmount)
@@ -106,8 +108,10 @@ func TransformNutritionData(nutdb *gorm.DB) error {
 			}
 
 			newNutrient := models.FoodNutrient{
-				Unit:   nutrientUnit,
-				Amount: amountNum,
+				FoodToUse:  newFood,
+				NutrientID: nut.ID,
+				Unit:       nutrientUnit,
+				Amount:     amountNum,
 			}
 
 			newFood.Nutrients = append(newFood.Nutrients, newNutrient)
@@ -116,7 +120,31 @@ func TransformNutritionData(nutdb *gorm.DB) error {
 		foods = append(foods, newFood)
 	}
 
-	nutdb.CreateInBatches(&foods, 10)
+	fmt.Printf("Found %d foods\n", len(foods))
+
+	// Gorm can't do the create right (it keeps trying to run an insert with all the nutrients, causing a crash)
+	// Create the foods with a raw SQL query
+	const batchSize = 1000
+
+	for i := 0; i < len(foods); i += batchSize {
+		end := max(i+batchSize, len(foods))
+
+		querryStr := "INSERT INTO foods (description) VALUES "
+
+		for j := i; j < end; j++ {
+			querryStr += fmt.Sprintf("('%s')", foods[j].Description)
+
+			if j < end-1 {
+				querryStr += ", "
+			}
+		}
+		querryStr += " RETURNING id ON CONFLICT (description) DO NOTHING;"
+
+		if err := nutdb.Exec(querryStr).Error; err != nil {
+			fmt.Printf("Error inserting foods: %v\n", err)
+			return err
+		}
+	}
 
 	return nil
 }
