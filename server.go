@@ -57,6 +57,8 @@ func main() {
 	http.HandleFunc("/delete-recipe", dbhandling.DeleteRecipe)
 	http.HandleFunc("/update-recipe-name", dbhandling.UpdateRecipeName)
 	http.HandleFunc("/add-ingredient", dbhandling.AddIngredient)
+	http.HandleFunc("/update-ingredient-amount", dbhandling.UpdateIngredientAmount)
+	http.HandleFunc("/delete-ingredient", dbhandling.DeleteIngredient)
 
 	server := &http.Server{Addr: ":80"}
 

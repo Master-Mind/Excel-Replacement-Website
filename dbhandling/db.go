@@ -1,6 +1,7 @@
 package dbhandling
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 	"os"
@@ -16,7 +17,8 @@ import (
 )
 
 var DB *gorm.DB
-var NutritionDB *gorm.DB //seperate because there's much, MUCH more data since it's pulling from the USDA database
+var NutritionDB *sql.DB //seperate because there's much, MUCH more data since it's pulling from the USDA database
+var NutdbInitted = false
 
 func InitDB() error {
 	var err error
@@ -35,21 +37,54 @@ func InitDB() error {
 		return err
 	}
 
-	NutritionDB, err = gorm.Open(sqlite.Open(os.Getenv("NUTDBSTR")), &gorm.Config{})
+	NutritionDB, err = sql.Open("sqlite3", os.Getenv("NUTDBSTR"))
 
 	if err != nil {
 		fmt.Printf("Error opening nutrition database: %v\n", err)
 		return err
 	}
 
-	err = NutritionDB.AutoMigrate(&models.Food{}, &models.FoodNutrient{}, &models.Nutrient{},
-		&models.Ingredient{}, &models.Recipe{}, &models.DietDay{},
-		&models.Person{})
+	initStatement :=
+		`CREATE TABLE IF NOT EXISTS foods (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		description TEXT NOT NULL
+	);
+	CREATE TABLE IF NOT EXISTS nutrients (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL,
+		dv_unit TEXT NOT NULL,
+		daily_value REAL
+	);
+	CREATE TABLE IF NOT EXISTS food_nutrients (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		food_id INTEGER NOT NULL,
+		nutrient_id INTEGER NOT NULL,
+		amount REAL NOT NULL,
+		unit TEXT NOT NULL,
+		FOREIGN KEY (food_id) REFERENCES foods(id),
+		FOREIGN KEY (nutrient_id) REFERENCES nutrients(id)
+	);
+	CREATE TABLE IF NOT EXISTS recipes (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL
+	);
+	CREATE TABLE IF NOT EXISTS ingredients (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		food_id INTEGER NOT NULL,
+		recipe_id INTEGER NOT NULL,
+		amount_g REAL NOT NULL,
+		FOREIGN KEY (food_id) REFERENCES foods(id),
+		FOREIGN KEY (recipe_id) REFERENCES recipes(id)
+	);`
+
+	_, err = NutritionDB.Exec(initStatement)
 
 	if err != nil {
-		fmt.Printf("Error migrating nutrition database: %v\n", err)
+		fmt.Printf("Error initializing nutrition database: %v\n", err)
 		return err
 	}
+
+	NutdbInitted = true
 
 	return nil
 }

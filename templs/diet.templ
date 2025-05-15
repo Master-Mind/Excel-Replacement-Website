@@ -1,21 +1,21 @@
 package templs
 
 import (
-    "github.com/Master-Mind/Excel-Replacement-Website/models"
     "strconv"
-	"fmt"
+
+    "github.com/Master-Mind/Excel-Replacement-Website/models"
 )
 
-templ FoodRecList(foodRecs []models.Food) {
+templ FoodRecList(foodRecs []string) {
     <datalist id="food-recomendations">
         for _, food := range foodRecs {
-            <option value={ food.Description }></option>
+            <option value={ food }></option>
         }
     </datalist>
 }
 
-templ FoodSearchBar(submission_endpoint string, swap_target string, button_text string) {
-    <form hx-post={submission_endpoint} hx-target={swap_target}>
+templ FoodSearchBar(submission_endpoint string, swap_target string, swap string, button_text string) {
+    <form hx-post={submission_endpoint} hx-target={swap_target} hx-swap={swap}>
         <label for="food-search">Search for food:</label>
         <input type="search" 
             id="food-search" 
@@ -27,7 +27,22 @@ templ FoodSearchBar(submission_endpoint string, swap_target string, button_text 
             hx-trigger="keyup changed delay:100ms">
         <button type="submit">{button_text}</button>
     </form>
-    @FoodRecList([]models.Food{})
+    @FoodRecList([]string{})
+}
+
+templ IngredientDisplay(ingredient models.Ingredient) {
+    <li class="ingredient-inline">
+        <input type="text" value={ strconv.FormatFloat(ingredient.AmountG, 'f', 1, 64) } 
+            name="ingredient-amount" 
+            hx-post={"/update-ingredient-amount?id=" + strconv.FormatInt(int64(ingredient.ID), 10)} 
+            hx-target="this" 
+            hx-trigger="change"
+            class="ingredient-amount">
+        g of { ingredient.FoodToUse.Description }
+        <button hx-post={"/delete-ingredient?id=" + strconv.FormatInt(int64(ingredient.ID), 10)} 
+            hx-target="closest li" 
+            hx-swap="delete">Delete</button>
+    </li>
 }
 
 templ RecipeDisplay(recipe models.Recipe, nutrients []models.Nutrient) {
@@ -39,21 +54,22 @@ templ RecipeDisplay(recipe models.Recipe, nutrients []models.Nutrient) {
         <h3>Ingredients:</h3>
         <ul id="ingredients-list">
         for _, ingredient := range recipe.Ingredients {
-            <li>{ strconv.FormatFloat(ingredient.AmountG, 'f', 1, 64) }g of { ingredient.FoodToUse.Description }</li>
+            @IngredientDisplay(ingredient)
         }
         </ul>
-        @FoodSearchBar("/add-ingredient?recipeid=" + strconv.FormatInt(int64(recipe.ID), 10), 
-        "#ingredients-list", "Add Ingredient")
+        @FoodSearchBar("/add-ingredient?recipe_id=" + strconv.FormatInt(int64(recipe.ID), 10), 
+        "#ingredients-list", "beforeend", "Add Ingredient")
         <br>
         <details>
             <summary>Nutrition</summary>
             {{
-                nutAmounts := make(map[uint]float64, len(nutrients))
+                nutAmounts := make(map[int64]float64, len(nutrients))
 
                 for _, ingredient := range recipe.Ingredients {
                     for _, nut := range ingredient.FoodToUse.Nutrients {
-                        fmt.Printf("Ingredient: %s, Nutrient: %s, Amount: %f\n", ingredient.FoodToUse.Description, nut.Nutrient.Name, nut.Amount)
-                        nutAmounts[nut.ID] += ingredient.AmountG * nut.Amount / 100.0 // normalize to the amount present in the food
+                        //fmt.Printf("Ingredient: %s, Nutrient: %s, Amount: %f, Amount of ingredient: %f\n", 
+                        //    ingredient.FoodToUse.Description, nut.Nutrient.Name, nut.Amount, ingredient.AmountG)
+                        nutAmounts[nut.Nutrient.ID] += ingredient.AmountG * nut.Amount / 100.0 // normalize to the amount present in the food
                     }
                 }
             }}
@@ -67,7 +83,7 @@ templ RecipeDisplay(recipe models.Recipe, nutrients []models.Nutrient) {
                 </thead>
                 <tbody>
                 for _, nut := range nutrients {
-                    if nutAmounts[nut.ID] > 0 {
+                    if nutAmounts[nut.ID] > 0.0 {
                         <tr>
                             <td>{ nut.Name }</td>
                             <td>{ strconv.FormatFloat(nutAmounts[nut.ID], 'f', 1, 64) }g</td>
@@ -81,12 +97,27 @@ templ RecipeDisplay(recipe models.Recipe, nutrients []models.Nutrient) {
     </div>
 }
 
-templ Diet(recipes []models.Recipe, nutrients []models.Nutrient, dbloaded bool) {
+templ Diet(dbloaded bool, recipes []models.Recipe, nutrients []models.Nutrient) {
     <html>
     <head>
         <title>Diet</title>
         <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
         <link rel="stylesheet" href={ stylesheet }>
+        <style>
+            .ingredient-inline {
+                display: flex;
+                align-items: center;
+                gap: 0.5em; /* optional: adds space between elements */
+            }
+            .ingredient-amount {
+                width: auto;
+                min-width: 2em;
+                max-width: 5em;
+                text-align: right;
+                padding: 2px 4px;
+                box-sizing: content-box;
+            }
+        </style>
     </head>
     <body>
         @Nav()

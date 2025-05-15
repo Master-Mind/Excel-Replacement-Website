@@ -1,16 +1,16 @@
 package data_loaders
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 
 	"github.com/Master-Mind/Excel-Replacement-Website/models"
-	"gorm.io/gorm"
 )
 
-func TransformNutritionData(nutdb *gorm.DB) error {
+func TransformNutritionData(nutdb *sql.DB) error {
 	file, err := os.ReadFile(os.Getenv("NUTRITION_DATA_FILE"))
 
 	if err != nil {
@@ -32,22 +32,44 @@ func TransformNutritionData(nutdb *gorm.DB) error {
 		return errors.New("couldn't find foundation foods array")
 	}
 
-	foods := make([]models.Food, 0)
+	foods := make([]string, 0)
 	nutrientMap := make(map[string]models.Nutrient)
-	nutrients := make([]models.Nutrient, 0)
 
-	err = nutdb.Find(&nutrients).Error
+	transaction, err := nutdb.Begin()
 
 	if err != nil {
-		fmt.Printf("Error finding nutrients: %v\n", err)
+		fmt.Printf("Error starting transaction: %v\n", err)
 		return err
 	}
 
-	for _, nutrient := range nutrients {
-		nutrientMap[nutrient.Name] = nutrient
+	foodInsertStmt, err := transaction.Prepare("INSERT INTO foods (id, description) VALUES (?, ?);")
+
+	if err != nil {
+		fmt.Printf("Error preparing food insert statement: %v\n", err)
+		return err
 	}
 
-	for _, item := range foundationFoodsArray {
+	foodNutrientID := 0
+
+	foodNutInsertStmt, err := transaction.Prepare("INSERT INTO food_nutrients (id, food_id, nutrient_id, amount, unit) VALUES (?, ?, ?, ?, ?);")
+
+	if err != nil {
+		fmt.Printf("Error preparing food nutrient insert statement: %v\n", err)
+		return err
+	}
+
+	nutrientID := 0
+	nutrientInsertStmt, err := transaction.Prepare("INSERT INTO nutrients (id, name, dv_unit) VALUES (?, ?, ?);")
+
+	if err != nil {
+		fmt.Printf("Error preparing nutrient insert statement: %v\n", err)
+		return err
+	}
+
+	defer foodInsertStmt.Close()
+	defer foodNutInsertStmt.Close()
+
+	for foodID, item := range foundationFoodsArray {
 		foodItem := item.(map[string]interface{})
 
 		if foodItem == nil {
@@ -55,9 +77,13 @@ func TransformNutritionData(nutdb *gorm.DB) error {
 			return errors.New("couldn't find food")
 		}
 
-		var newFood models.Food
+		newFoodDesc := foodItem["description"].(string)
+		_, err := foodInsertStmt.Exec(foodID, newFoodDesc)
 
-		newFood.Description = foodItem["description"].(string)
+		if err != nil {
+			fmt.Printf("Error creating food: %v\n", err)
+			continue
+		}
 
 		foodNutrients := foodItem["foodNutrients"].([]interface{})
 
@@ -94,10 +120,18 @@ func TransformNutritionData(nutdb *gorm.DB) error {
 					Name:   nutrientName,
 					DVUnit: nutrientUnit,
 				}
-				if err := nutdb.Where("name = ? AND dv_unit = ?", nutrientName, nutrientUnit).FirstOrCreate(&nut).Error; err != nil {
+
+				_, err := nutrientInsertStmt.Exec(nutrientID, nutrientName, nutrientUnit)
+
+				if err != nil {
 					fmt.Printf("Error creating/finding nutrient: %v\n", err)
 					continue
 				}
+
+				nutrientID++
+
+				nut.ID = int64(nutrientID)
+
 				nutrientMap[nutrientName] = nut
 			}
 
@@ -107,44 +141,27 @@ func TransformNutritionData(nutdb *gorm.DB) error {
 				continue
 			}
 
-			newNutrient := models.FoodNutrient{
-				FoodToUse:  newFood,
-				NutrientID: nut.ID,
-				Unit:       nutrientUnit,
-				Amount:     amountNum,
-			}
+			_, err := foodNutInsertStmt.Exec(foodNutrientID, foodID, nut.ID, amountNum, nutrientUnit)
 
-			newFood.Nutrients = append(newFood.Nutrients, newNutrient)
+			foodNutrientID++
+
+			if err != nil {
+				fmt.Printf("Error creating food nutrient: %v\n", err)
+				continue
+			}
 		}
 
-		foods = append(foods, newFood)
+		foods = append(foods, newFoodDesc)
+	}
+
+	err = transaction.Commit()
+
+	if err != nil {
+		fmt.Printf("Error committing transaction: %v\n", err)
+		return err
 	}
 
 	fmt.Printf("Found %d foods\n", len(foods))
-
-	// Gorm can't do the create right (it keeps trying to run an insert with all the nutrients, causing a crash)
-	// Create the foods with a raw SQL query
-	const batchSize = 1000
-
-	for i := 0; i < len(foods); i += batchSize {
-		end := max(i+batchSize, len(foods))
-
-		querryStr := "INSERT INTO foods (description) VALUES "
-
-		for j := i; j < end; j++ {
-			querryStr += fmt.Sprintf("('%s')", foods[j].Description)
-
-			if j < end-1 {
-				querryStr += ", "
-			}
-		}
-		querryStr += " RETURNING id ON CONFLICT (description) DO NOTHING;"
-
-		if err := nutdb.Exec(querryStr).Error; err != nil {
-			fmt.Printf("Error inserting foods: %v\n", err)
-			return err
-		}
-	}
 
 	return nil
 }
