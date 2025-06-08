@@ -9,9 +9,9 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"strconv"
-
 	"github.com/Master-Mind/Excel-Replacement-Website/models"
+	"gonum.org/v1/gonum/unit"
+	"strconv"
 )
 
 func FoodRecList(foodRecs []string) templ.Component {
@@ -177,9 +177,9 @@ func IngredientDisplay(ingredient models.Ingredient) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var9 string
-		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatFloat(ingredient.AmountG, 'f', 1, 64))
+		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(models.FormatMass(ingredient.Amount))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/diet.templ`, Line: 35, Col: 86}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/diet.templ`, Line: 35, Col: 71}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -198,14 +198,14 @@ func IngredientDisplay(ingredient models.Ingredient) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\" hx-target=\"this\" hx-trigger=\"change\" class=\"ingredient-amount\"> g of ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\" hx-target=\"this\" hx-trigger=\"change\" class=\"ingredient-amount\"> of ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(ingredient.FoodToUse.Description)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/diet.templ`, Line: 41, Col: 47}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/diet.templ`, Line: 41, Col: 46}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -303,13 +303,13 @@ func RecipeDisplay(recipe models.Recipe, nutrients []models.Nutrient) templ.Comp
 			return templ_7745c5c3_Err
 		}
 
-		nutAmounts := make(map[int64]float64, len(nutrients))
+		nutAmounts := make(map[int64]unit.Mass, len(nutrients))
 
 		for _, ingredient := range recipe.Ingredients {
 			for _, nut := range ingredient.FoodToUse.Nutrients {
 				//fmt.Printf("Ingredient: %s, Nutrient: %s, Amount: %f, Amount of ingredient: %f\n",
 				//    ingredient.FoodToUse.Description, nut.Nutrient.Name, nut.Amount, ingredient.AmountG)
-				nutAmounts[nut.Nutrient.ID] += ingredient.AmountG * nut.Amount / 100.0 // normalize to the amount present in the food
+				nutAmounts[nut.Nutrient.ID] += ingredient.Amount * nut.Amount
 			}
 		}
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<table><thead><tr><th>Nutrient</th><th>Amount</th></tr></thead> <tbody>")
@@ -336,15 +336,15 @@ func RecipeDisplay(recipe models.Recipe, nutrients []models.Nutrient) templ.Comp
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var17 string
-				templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatFloat(nutAmounts[nut.ID], 'f', 1, 64))
+				templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(models.FormatMass(nutAmounts[nut.ID]))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/diet.templ`, Line: 89, Col: 85}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/diet.templ`, Line: 89, Col: 71}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "g</td></tr>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</td></tr>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

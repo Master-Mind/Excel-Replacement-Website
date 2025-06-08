@@ -208,15 +208,21 @@ func RunPage(runs []models.Run) templ.Component {
 			templ_7745c5c3_Var10 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		for i := 0; i < len(runs)-1; i++ {
-			templ_7745c5c3_Err = RunRow(runs[i], false).Render(ctx, templ_7745c5c3_Buffer)
+		if len(runs) > 0 {
+			for i := 0; i < len(runs)-1; i++ {
+				templ_7745c5c3_Err = RunRow(runs[i], false).Render(ctx, templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, " ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-		}
-		templ_7745c5c3_Err = RunRow(runs[len(runs)-1], true).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
+			templ_7745c5c3_Err = RunRow(runs[len(runs)-1], true).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
 		return nil
 	})
@@ -243,29 +249,16 @@ func ShoeRow(shoe models.Shoe, shoeMilage float64) templ.Component {
 			templ_7745c5c3_Var11 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<tr><td>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<tr><td>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(shoe.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/run_display.templ`, Line: 43, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/run_display.templ`, Line: 45, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</td><td>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var13 string
-		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(shoe.DatePurchased.Format("Mon, 02 Jan 2006"))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/run_display.templ`, Line: 44, Col: 59}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -273,12 +266,12 @@ func ShoeRow(shoe models.Shoe, shoeMilage float64) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var14 string
-		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(shoe.DateRetired.Format("Mon, 02 Jan 2006"))
+		var templ_7745c5c3_Var13 string
+		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(shoe.DatePurchased.Format("Mon, 02 Jan 2006"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/run_display.templ`, Line: 45, Col: 57}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/run_display.templ`, Line: 46, Col: 59}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -286,25 +279,25 @@ func ShoeRow(shoe models.Shoe, shoeMilage float64) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		var templ_7745c5c3_Var14 string
+		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(shoe.DateRetired.Format("Mon, 02 Jan 2006"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/run_display.templ`, Line: 47, Col: 57}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</td><td>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatInt(int64(shoe.MinMilage), 10))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/run_display.templ`, Line: 46, Col: 58}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/run_display.templ`, Line: 48, Col: 58}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, " miles</td><td>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var16 string
-		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatInt(int64(shoe.MaxMilage), 10))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/run_display.templ`, Line: 47, Col: 58}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -312,29 +305,42 @@ func ShoeRow(shoe models.Shoe, shoeMilage float64) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		var templ_7745c5c3_Var16 string
+		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatInt(int64(shoe.MaxMilage), 10))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/run_display.templ`, Line: 49, Col: 58}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, " miles</td><td>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatFloat(shoeMilage, 'f', -1, 64))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/run_display.templ`, Line: 48, Col: 58}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/run_display.templ`, Line: 50, Col: 58}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, " miles</td><td><button hx-delete=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, " miles</td><td><button hx-delete=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("/delete-shoe?id=%v", shoe.ID))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/run_display.templ`, Line: 50, Col: 73}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/run_display.templ`, Line: 52, Col: 73}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\" hx-target=\"closest tr\" hx-swap=\"delete\">Delete</button></td></tr>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\" hx-target=\"closest tr\" hx-swap=\"delete\">Delete</button></td></tr>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -363,20 +369,20 @@ func RunDisplay(runs []models.Run, shoes []models.Shoe) templ.Component {
 			templ_7745c5c3_Var19 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<html><head><title>Runs</title><script src=\"https://unpkg.com/htmx.org@2.0.4\" integrity=\"sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+\" crossorigin=\"anonymous\"></script><link rel=\"stylesheet\" href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<html><head><title>Runs</title><script src=\"https://unpkg.com/htmx.org@2.0.4\" integrity=\"sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+\" crossorigin=\"anonymous\"></script><link rel=\"stylesheet\" href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var20 string
 		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(stylesheet)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/run_display.templ`, Line: 60, Col: 48}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/run_display.templ`, Line: 62, Col: 48}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\"><style>\r\n            .form-group {\r\n                display: flex;\r\n                align-items: center;\r\n                gap: 10px;\r\n            }\r\n            .form-group label {\r\n                margin-right: 5px;\r\n            }\r\n        </style></head><body>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "\"><style>\r\n            .form-group {\r\n                display: flex;\r\n                align-items: center;\r\n                gap: 10px;\r\n            }\r\n            .form-group label {\r\n                margin-right: 5px;\r\n            }\r\n        </style></head><body>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -384,20 +390,20 @@ func RunDisplay(runs []models.Run, shoes []models.Shoe) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<h2>Shoes</h2><form id=\"new-shoe\" hx-post=\"/new-shoe\" hx-target=\"next tbody\" hx-swap=\"afterbegin\"><div class=\"form-group\"><label for=\"name\">Shoe Name</label> <input type=\"text\" id=\"name\" name=\"name\" value=\"\"> <label for=\"purchase-date\">Date Purchased</label> <input type=\"date\" id=\"purchase-date\" name=\"purchase-date\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<h2>Shoes</h2><form id=\"new-shoe\" hx-post=\"/new-shoe\" hx-target=\"next tbody\" hx-swap=\"afterbegin\"><div class=\"form-group\"><label for=\"name\">Shoe Name</label> <input type=\"text\" id=\"name\" name=\"name\" value=\"\"> <label for=\"purchase-date\">Date Purchased</label> <input type=\"date\" id=\"purchase-date\" name=\"purchase-date\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs((time.Now()).Format("2006-01-02"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/run_display.templ`, Line: 80, Col: 112}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/run_display.templ`, Line: 82, Col: 112}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\"> <label for=\"retire-date\">Date Retired</label> <input type=\"date\" id=\"retire-date\" name=\"retire-date\" value=\"\"></div><div class=\"form-group\"><label for=\"min-milage\">Min Milage</label> <input type=\"number\" id=\"min-milage\" name=\"min-milage\" value=\"300\"> <label for=\"max-milage\">Max Milage</label> <input type=\"number\" id=\"max-milage\" name=\"max-milage\" value=\"500\"> <input type=\"submit\" value=\"Add Shoe\"></div></form><table><thead><tr><th>Shoe Name</th><th>Date Purchased</th><th>Date Retired</th><th>Min Milage</th><th>Max Milage</th><th>Milage</th><th>Delete</th></tr></thead> <tbody>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "\"> <label for=\"retire-date\">Date Retired</label> <input type=\"date\" id=\"retire-date\" name=\"retire-date\" value=\"\"></div><div class=\"form-group\"><label for=\"min-milage\">Min Milage</label> <input type=\"number\" id=\"min-milage\" name=\"min-milage\" value=\"300\"> <label for=\"max-milage\">Max Milage</label> <input type=\"number\" id=\"max-milage\" name=\"max-milage\" value=\"500\"> <input type=\"submit\" value=\"Add Shoe\"></div></form><table><thead><tr><th>Shoe Name</th><th>Date Purchased</th><th>Date Retired</th><th>Min Milage</th><th>Max Milage</th><th>Milage</th><th>Delete</th></tr></thead> <tbody>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -426,20 +432,20 @@ func RunDisplay(runs []models.Run, shoes []models.Shoe) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</tbody></table><h2>Record a new run</h2><form id=\"new-run\" hx-post=\"/new-run\" hx-target=\"next tbody\" hx-swap=\"afterbegin\"><div class=\"form-group\"><label for=\"distance\">Distance Ran</label> <input type=\"number\" id=\"distance\" name=\"distance\" value=\"0\" step=\"any\"> <label for=\"minutes\">Minutes</label> <input type=\"number\" id=\"minutes\" name=\"minutes\" value=\"0\"> <label for=\"date\">Date</label> <input type=\"date\" id=\"date\" name=\"date\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</tbody></table><h2>Record a new run</h2><form id=\"new-run\" hx-post=\"/new-run\" hx-target=\"next tbody\" hx-swap=\"afterbegin\"><div class=\"form-group\"><label for=\"distance\">Distance Ran</label> <input type=\"number\" id=\"distance\" name=\"distance\" value=\"0\" step=\"any\"> <label for=\"minutes\">Minutes</label> <input type=\"number\" id=\"minutes\" name=\"minutes\" value=\"0\"> <label for=\"date\">Date</label> <input type=\"date\" id=\"date\" name=\"date\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var22 string
 		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs((time.Now()).Format("2006-01-02"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/run_display.templ`, Line: 139, Col: 94}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templs/run_display.templ`, Line: 141, Col: 94}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\"> <input type=\"submit\" value=\"Add Run\"></div></form><h2>Runs</h2><table><thead><tr><th>Date</th><th>Distance</th><th>Time</th><th>Pace (mph)</th><th>Pace (mpm)</th><th>Delete</th></tr></thead> <tbody>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "\"> <input type=\"submit\" value=\"Add Run\"></div></form><h2>Runs</h2><table><thead><tr><th>Date</th><th>Distance</th><th>Time</th><th>Pace (mph)</th><th>Pace (mpm)</th><th>Delete</th></tr></thead> <tbody>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -447,7 +453,7 @@ func RunDisplay(runs []models.Run, shoes []models.Shoe) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</tbody></table></body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</tbody></table></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

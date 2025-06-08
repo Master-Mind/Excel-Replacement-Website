@@ -9,7 +9,48 @@ import (
 
 	"github.com/Master-Mind/Excel-Replacement-Website/models"
 	"github.com/Master-Mind/Excel-Replacement-Website/templs"
+	"gonum.org/v1/gonum/unit"
 )
+
+const Pound = unit.Mass(0.45359237)
+const Ounce = unit.Mass(0.02834952)
+const IU = unit.Mass(0.00000001)   // International Unit, used for vitamins and some minerals, technically not valid because it varies by substance, but used here for simplicity
+const Calorie = unit.Energy(4.184) // 1 Calorie = 4.184 Joules
+
+func MakeGonumMass(amount float64, unitStr string) (unit.Mass, error) {
+
+	switch unitStr {
+	case "g":
+		return unit.Mass(amount) * unit.Gram, nil
+	case "kg":
+		return unit.Mass(amount) * unit.Kilogram, nil
+	case "mg":
+		return unit.Mass(amount) * unit.Gram * unit.Milli, nil
+	case "oz":
+		return unit.Mass(amount) * Ounce, nil
+	case "lb":
+		return unit.Mass(amount) * Pound, nil
+	case "µg":
+		return unit.Mass(amount) * unit.Gram * unit.Micro, nil
+	default:
+		return -1, fmt.Errorf("unknown unit: %s", unitStr)
+	}
+}
+
+func MakeGonumEnergy(amount float64, unitStr string) (unit.Energy, error) {
+	switch unitStr {
+	case "kcal":
+		return unit.Energy(amount) * Calorie * unit.Kilo, nil
+	case "cal":
+		return unit.Energy(amount) * Calorie, nil
+	case "kJ":
+		return unit.Energy(amount) * unit.Joule * unit.Kilo, nil
+	case "J":
+		return unit.Energy(amount) * unit.Joule, nil
+	default:
+		return -1, fmt.Errorf("unknown energy unit: %s", unitStr)
+	}
+}
 
 func getNutrients() ([]models.Nutrient, error) {
 	var nutrients []models.Nutrient
@@ -22,14 +63,25 @@ func getNutrients() ([]models.Nutrient, error) {
 	defer rows.Close()
 	for rows.Next() {
 		var nutrient models.Nutrient
-		var dbNullableInt sql.NullInt64
+		var dailyValue sql.NullInt64
+		var dvUnit string
 
-		if err := rows.Scan(&nutrient.ID, &nutrient.Name, &nutrient.DVUnit, &dbNullableInt); err != nil {
+		if err := rows.Scan(&nutrient.ID, &nutrient.Name, &dvUnit, &dailyValue); err != nil {
 			return nil, fmt.Errorf("error scanning nutrient: %v", err)
 		}
 
-		if dbNullableInt.Valid {
-			nutrient.DailyValue = uint(dbNullableInt.Int64)
+		if dailyValue.Valid {
+			nutrient.DailyValue, err = MakeGonumMass(float64(dailyValue.Int64), dvUnit) // Convert to gonum unit
+			if err != nil {
+				//try to convert energy
+				nutrient.DVEnergy, err = MakeGonumEnergy(float64(dailyValue.Int64), dvUnit)
+
+				if err != nil {
+					//ignore the error, set DailyValue to 0
+					fmt.Printf("Error converting daily value for nutrient %s: %v, setting to 0\n", nutrient.Name, err)
+					nutrient.DailyValue = 0
+				}
+			}
 		} else {
 			nutrient.DailyValue = 0
 		}
@@ -119,10 +171,14 @@ func DietPageHandler(w http.ResponseWriter, r *http.Request) {
 
 	for rows.Next() {
 		var ingredient models.Ingredient
-		if err := rows.Scan(&ingredient.ID, &ingredient.FoodID, &ingredient.RecipeID, &ingredient.AmountG); err != nil {
+		var amountG float64
+
+		if err := rows.Scan(&ingredient.ID, &ingredient.FoodID, &ingredient.RecipeID, &amountG); err != nil {
 			HandleError(w, r, "Error scanning ingredient: %v", err)
 			return
 		}
+
+		ingredient.Amount = unit.Mass(amountG) * unit.Gram // Convert amount to gonum unit
 
 		if recipe, exists := recipeMap[ingredient.RecipeID]; exists {
 			ingredient.FoodToUse = models.Food{ID: ingredient.FoodID}   // Initialize Food struct
@@ -174,9 +230,19 @@ func DietPageHandler(w http.ResponseWriter, r *http.Request) {
 					defer nutrientRows.Close()
 					for nutrientRows.Next() {
 						var foodNutrient models.FoodNutrient
-						if err := nutrientRows.Scan(&foodNutrient.ID, &foodNutrient.NutrientID, &foodNutrient.Amount, &foodNutrient.Unit); err != nil {
+						var amount float64
+						var unitStr string
+
+						if err := nutrientRows.Scan(&foodNutrient.ID, &foodNutrient.NutrientID, &amount, &unitStr); err != nil {
 							HandleError(w, r, "Error scanning food nutrient: %v", err)
 							return
+						}
+
+						foodNutrient.Amount, err = MakeGonumMass(amount, unitStr) // Convert to gonum unit
+						if err != nil {
+							//ignore the error, set Amount to 0
+							fmt.Printf("Error converting amount for nutrient ID %d: %v, setting to 0\n", foodNutrient.NutrientID, err)
+							foodNutrient.Amount = 0
 						}
 
 						// Find the nutrient by ID
@@ -330,7 +396,7 @@ func AddIngredient(w http.ResponseWriter, r *http.Request) {
 	var ingredient models.Ingredient
 	ingredient.FoodID = foodID
 	ingredient.RecipeID = recipeID
-	ingredient.AmountG = 100.0
+	ingredient.Amount = 100.0 * unit.Gram // Default amount in grams
 	ingredient.ID, err = result.LastInsertId()
 	ingredient.FoodToUse = models.Food{ID: foodID, Description: foodName} // Initialize Food struct
 	if err != nil {

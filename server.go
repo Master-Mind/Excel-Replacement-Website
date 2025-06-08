@@ -38,6 +38,7 @@ func main() {
 	}
 
 	http.HandleFunc("/", rootHandler)
+	http.HandleFunc("/workout-page", dbhandling.WorkoutPage)
 	http.HandleFunc("/runs", dbhandling.RunHandler)
 	http.HandleFunc("/run-page", dbhandling.RunPage)
 	http.HandleFunc("/trans-data", dbhandling.TransformData)

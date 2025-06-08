@@ -145,7 +145,7 @@ func AddWorkout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	comp := templs.WorkoutDisplay(newWorkout, setTypes)
+	comp := templs.WorkoutDisplay(newWorkout, setTypes, false)
 	comp.Render(r.Context(), w) // Render the component to show the updated list of workouts
 }
 
@@ -209,7 +209,7 @@ func CreateWorkout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	comp := templs.WorkoutDisplay(workout, setTypes)
+	comp := templs.WorkoutDisplay(workout, setTypes, false)
 	comp.Render(r.Context(), w) // Render the component to show the updated list of workouts
 }
 
@@ -251,6 +251,6 @@ func AddSet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	comp := templs.LiftRow(set)
+	comp := templs.LiftRow(set, false)
 	comp.Render(r.Context(), w) // Render the component to show the updated list of workouts
 }

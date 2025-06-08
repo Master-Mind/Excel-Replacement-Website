@@ -117,8 +117,7 @@ func TransformNutritionData(nutdb *sql.DB) error {
 
 			if !hasNut {
 				nut = models.Nutrient{
-					Name:   nutrientName,
-					DVUnit: nutrientUnit,
+					Name: nutrientName,
 				}
 
 				_, err := nutrientInsertStmt.Exec(nutrientID, nutrientName, nutrientUnit)

@@ -1,5 +1,7 @@
 package models
 
+import "gonum.org/v1/gonum/unit"
+
 type Food struct {
 	ID          int64
 	Description string
@@ -12,23 +14,22 @@ type FoodNutrient struct {
 	FoodToUse  Food
 	NutrientID int64
 	Nutrient   Nutrient
-	Amount     float64
-	Unit       string
+	Amount     unit.Mass
 }
 
 type Nutrient struct {
 	ID         int64
 	Name       string
-	DVUnit     string
-	DailyValue uint
+	DailyValue unit.Mass
+	DVEnergy   unit.Energy // Daily value energy in kcal or kJ
 }
 
 type Ingredient struct {
 	ID        int64
 	FoodID    int64
 	FoodToUse Food
-	AmountG   float64 // Amount in grams
-	RecipeID  int64   // Foreign key to Recipe
+	Amount    unit.Mass
+	RecipeID  int64 // Foreign key to Recipe
 }
 
 type Recipe struct {
@@ -47,8 +48,8 @@ type Person struct {
 	Name                 string
 	Age                  uint
 	IsMale               bool
-	HeightCM             uint
-	WeightKG             uint
-	BodyFatPercent       uint
-	TargetBodyFatPercent uint
+	Height               unit.Length
+	Weight               unit.Length
+	BodyFatPercent       float32
+	TargetBodyFatPercent float32
 } // Add other fields as necessary

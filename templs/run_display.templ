@@ -31,11 +31,13 @@ templ RunRow(run models.Run, lastOfPage bool) {
 }
 
 templ RunPage(runs []models.Run) {
-    for i := 0; i < len(runs) - 1; i++ {
-        @RunRow(runs[i], false)
-    }
+    if len(runs) > 0 {
+        for i := 0; i < len(runs) - 1; i++ {
+            @RunRow(runs[i], false)
+        }
 
-    @RunRow(runs[len(runs) - 1], true)
+        @RunRow(runs[len(runs) - 1], true)
+    }
 }
 
 templ ShoeRow(shoe models.Shoe, shoeMilage float64) {

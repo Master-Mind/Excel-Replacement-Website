@@ -160,6 +160,32 @@ func TransformData(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+const workoutPageLimit = 10
+
+func WorkoutPage(w http.ResponseWriter, r *http.Request) {
+	var setTypes []models.SetType
+	err := DB.Find(&setTypes).Error
+	if HandleError(w, r, "Error finding set types in db: %v", err) {
+		return
+	}
+
+	fmt.Printf("Found %d set Types\n", len(setTypes))
+
+	// Get the workout data from the database
+	var workouts []models.Workout
+	startDate := r.URL.Query().Get("date")
+
+	err = DB.Preload("Sets.SetType").Order("Date desc").Where("Date < ?", startDate).Limit(workoutPageLimit).Find(&workouts).Error
+	if HandleError(w, r, "Error finding workouts in db: %v", err) {
+		return
+	}
+
+	fmt.Printf("Found %d workouts\n", len(workouts))
+
+	comp := templs.WorkoutPage(workouts, setTypes)
+	comp.Render(r.Context(), w)
+}
+
 func WorkoutHandler(w http.ResponseWriter, r *http.Request) {
 	var setTypes []models.SetType
 	err := DB.Find(&setTypes).Error
@@ -172,7 +198,7 @@ func WorkoutHandler(w http.ResponseWriter, r *http.Request) {
 	// Get the workout data from the database
 	var workouts []models.Workout
 
-	err = DB.Preload("Sets.SetType").Order("Date desc").Find(&workouts).Error
+	err = DB.Preload("Sets.SetType").Order("Date desc").Limit(workoutPageLimit).Find(&workouts).Error
 	if HandleError(w, r, "Error finding workouts in db: %v", err) {
 		return
 	}
@@ -183,7 +209,9 @@ func WorkoutHandler(w http.ResponseWriter, r *http.Request) {
 	comp.Render(r.Context(), w)
 }
 
-const limit = 30 // Set a limit for the number of runs to display
+// Limit for the number of runs to fetch.
+// Infinite scroll breaks the shoe milage calculation, so set the limit to "infinity" for now.
+const limit = 10000
 
 func RunPage(w http.ResponseWriter, r *http.Request) {
 	// Get the workout data from the database

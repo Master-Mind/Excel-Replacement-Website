@@ -4,9 +4,10 @@ import (
     "github.com/Master-Mind/Excel-Replacement-Website/models"
     "strconv"
     "time"
+    "fmt"
 )
 
-templ LiftRow(set models.Set) {
+templ LiftRow(set models.Set, lastOfPage bool) {
     <tr>
         <td>{ strconv.FormatInt(int64(set.Intensity), 10) }</td>
         <td>{ strconv.FormatInt(int64(set.Reps), 10) }</td>
@@ -16,9 +17,14 @@ templ LiftRow(set models.Set) {
     </tr>
 }
 
-templ WorkoutDisplay(workout models.Workout, settypes []models.SetType) {
+templ WorkoutDisplay(workout models.Workout, settypes []models.SetType, lastOfPage bool) {
     <div>
-    <h2>{ workout.Date.Format("Mon, 02 Jan 2006") }</h2>
+    if lastOfPage {
+        <h2 hx-get={fmt.Sprintf("/workout-page?date=%v", workout.Date)} hx-target="#replaceme"
+         hx-swap="outerHTML" hx-trigger="revealed">{ workout.Date.Format("Mon, 02 Jan 2006") }</h2>
+    } else {
+        <h2>{ workout.Date.Format("Mon, 02 Jan 2006") }</h2>
+    }
     <button hx-delete={ "/delete-workout?id=" + strconv.FormatUint(uint64(workout.ID), 10) } hx-target="closest div" hx-swap="delete">Delete</button>
 
 //can't get the set type at generate time, so we'll have to just append it to the start of the workout
@@ -73,6 +79,19 @@ templ WorkoutDisplay(workout models.Workout, settypes []models.SetType) {
         }
     }
     </div>
+    if lastOfPage {
+        <div id="replaceme"></div>
+    }
+}
+
+templ WorkoutPage (workouts []models.Workout, settypes []models.SetType) {
+    if len(workouts) > 0 {
+        for i := 0; i < len(workouts) - 1; i++  {
+            @WorkoutDisplay(workouts[i], settypes, false)
+        }
+
+        @WorkoutDisplay(workouts[len(workouts) - 1], settypes, true)
+    }
 }
 
 templ LiftDisplay(workouts []models.Workout, settypes []models.SetType) {
@@ -111,9 +130,7 @@ templ LiftDisplay(workouts []models.Workout, settypes []models.SetType) {
             </div>
         </form>
         <div>
-        for _, workout := range workouts {
-            @WorkoutDisplay(workout, settypes)
-        }
+        @WorkoutPage(workouts, settypes)
         </div>
     </body>
     </html>

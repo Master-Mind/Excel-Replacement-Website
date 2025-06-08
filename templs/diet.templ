@@ -2,7 +2,7 @@ package templs
 
 import (
     "strconv"
-
+	"gonum.org/v1/gonum/unit"
     "github.com/Master-Mind/Excel-Replacement-Website/models"
 )
 
@@ -32,13 +32,13 @@ templ FoodSearchBar(submission_endpoint string, swap_target string, swap string,
 
 templ IngredientDisplay(ingredient models.Ingredient) {
     <li class="ingredient-inline">
-        <input type="text" value={ strconv.FormatFloat(ingredient.AmountG, 'f', 1, 64) } 
+        <input type="text" value={ models.FormatMass(ingredient.Amount) } 
             name="ingredient-amount" 
             hx-post={"/update-ingredient-amount?id=" + strconv.FormatInt(int64(ingredient.ID), 10)} 
             hx-target="this" 
             hx-trigger="change"
             class="ingredient-amount">
-        g of { ingredient.FoodToUse.Description }
+         of { ingredient.FoodToUse.Description }
         <button hx-post={"/delete-ingredient?id=" + strconv.FormatInt(int64(ingredient.ID), 10)} 
             hx-target="closest li" 
             hx-swap="delete">Delete</button>
@@ -63,13 +63,13 @@ templ RecipeDisplay(recipe models.Recipe, nutrients []models.Nutrient) {
         <details>
             <summary>Nutrition</summary>
             {{
-                nutAmounts := make(map[int64]float64, len(nutrients))
+                nutAmounts := make(map[int64]unit.Mass, len(nutrients))
 
                 for _, ingredient := range recipe.Ingredients {
                     for _, nut := range ingredient.FoodToUse.Nutrients {
                         //fmt.Printf("Ingredient: %s, Nutrient: %s, Amount: %f, Amount of ingredient: %f\n", 
                         //    ingredient.FoodToUse.Description, nut.Nutrient.Name, nut.Amount, ingredient.AmountG)
-                        nutAmounts[nut.Nutrient.ID] += ingredient.AmountG * nut.Amount / 100.0 // normalize to the amount present in the food
+                        nutAmounts[nut.Nutrient.ID] += ingredient.Amount * nut.Amount
                     }
                 }
             }}
@@ -86,7 +86,7 @@ templ RecipeDisplay(recipe models.Recipe, nutrients []models.Nutrient) {
                     if nutAmounts[nut.ID] > 0.0 {
                         <tr>
                             <td>{ nut.Name }</td>
-                            <td>{ strconv.FormatFloat(nutAmounts[nut.ID], 'f', 1, 64) }g</td>
+                            <td>{ models.FormatMass(nutAmounts[nut.ID]) }</td>
                         </tr>
                     }
                 }
