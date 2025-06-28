@@ -292,7 +292,13 @@ func AddRecipe(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("Created new recipe: %s\n", recipe.Name)
 
-	comp := templs.RecipeDisplay(recipe, nutrients)
+	nutMap := make(map[string]models.Nutrient)
+
+	for _, nut := range nutrients {
+		nutMap[nut.Name] = nut
+	}
+
+	comp := templs.RecipeDisplay(recipe, nutMap)
 	if err := comp.Render(r.Context(), w); err != nil {
 		fmt.Printf("Error rendering recipe display: %v\n", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

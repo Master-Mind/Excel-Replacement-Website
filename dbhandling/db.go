@@ -75,6 +75,18 @@ func InitDB() error {
 		amount_g REAL NOT NULL,
 		FOREIGN KEY (food_id) REFERENCES foods(id),
 		FOREIGN KEY (recipe_id) REFERENCES recipes(id)
+	);
+	CREATE TABLE IF NOT EXISTS person (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL,
+		age INTEGER,
+		weight_kg REAL,
+		height_cm REAL,
+		body_fat_percent REAL
+		);
+	CREATE TABLE IF NOT EXISTS diet_days (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL
 	);`
 
 	_, err = NutritionDB.Exec(initStatement)

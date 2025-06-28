@@ -7,6 +7,10 @@ import (
     "fmt"
 )
 
+// Dirived by averaging results from studies by Brzycki, Baechle, and dos Remedios
+// Found these from https://exrx.net/Calculators/OneRepMax
+var oneRepMaxPercents = [...]float32{0, 1, 0.94, 0.91, 0.88, 0.86, 0.83, 0.82, 0.78, 0.77, 0.74, 0.72, 0.67, 0.63}
+
 templ LiftRow(set models.Set, lastOfPage bool) {
     <tr>
         <td>{ strconv.FormatInt(int64(set.Intensity), 10) }</td>
@@ -58,8 +62,12 @@ templ WorkoutDisplay(workout models.Workout, settypes []models.SetType, lastOfPa
                 <table>
                     <thead>
                         <tr>
-                            <th>Intensity</th>
-                            <th>Reps</th>
+                            <th>{settypes[id].IntensityUnit}</th>
+                            <th>{settypes[id].RepUnit}</th>
+                            if settypes[id].IntensityUnit == "lbs" {
+                                <th>One Rep Max Estimate</th>
+                                <th>One Rep Max Percent</th>
+                            }
                             <th>Delete</th>
                         </tr>
                     </thead>
@@ -68,6 +76,15 @@ templ WorkoutDisplay(workout models.Workout, settypes []models.SetType, lastOfPa
                             <tr>
                                 <td>{ strconv.Itoa(set.Intensity) }</td>
                                 <td>{ strconv.Itoa(set.Reps) }</td>
+                                if settypes[id].IntensityUnit == "lbs" {
+                                    if set.Reps < 1 || set.Reps >= len(oneRepMaxPercents) {
+                                        <td>0</td>
+                                        <td>0%</td>
+                                    } else {
+                                        <td>{ strconv.FormatFloat(float64(set.Intensity) / float64(oneRepMaxPercents[set.Reps]), 'f', 2, 64) }</td>
+                                        <td>{ strconv.FormatFloat(float64(oneRepMaxPercents[set.Reps]) * 100, 'f', 2, 64) }%</td>
+                                    }
+                                }
                                 <td>
                                     <button hx-delete={ "/delete-set?id=" + strconv.FormatUint(uint64(set.ID), 10) } hx-target="closest tr" hx-swap="delete">Delete</button>
                                 </td>
@@ -122,7 +139,7 @@ templ LiftDisplay(workouts []models.Workout, settypes []models.SetType) {
     <body>
         @Nav()
         <h1>Workouts</h1>
-        <form id="new-set" hx-post="/new-workout" hx-target="next div" hx-swap="afterbegin">
+        <form id="new-workout" hx-post="/new-workout" hx-target="next div" hx-swap="afterbegin">
             <div class="form-group">
                 <label for="workout-date">Workout Date</label>
                 <input type="date" id="workout-date" name="workout-date" value={ (time.Now()).Format("2006-01-02")}/>

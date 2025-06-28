@@ -30,6 +30,27 @@ templ FoodSearchBar(submission_endpoint string, swap_target string, swap string,
     @FoodRecList([]string{})
 }
 
+templ NutritionDisplay(nutMap map[string]models.Nutrient, nutAmounts map[int64]unit.Mass) {
+    <table>
+        <thead>
+            <tr>
+                <th>Nutrient</th>
+                <th>Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+        for _, nut := range nutMap {
+            if nutAmounts[nut.ID] > 0.0 {
+                <tr>
+                    <td>{ nut.Name }</td>
+                    <td>{ models.FormatMass(nutAmounts[nut.ID]) }</td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+}
+
 templ IngredientDisplay(ingredient models.Ingredient) {
     <li class="ingredient-inline">
         <input type="text" value={ models.FormatMass(ingredient.Amount) } 
@@ -45,7 +66,7 @@ templ IngredientDisplay(ingredient models.Ingredient) {
     </li>
 }
 
-templ RecipeDisplay(recipe models.Recipe, nutrients []models.Nutrient) {
+templ RecipeDisplay(recipe models.Recipe, nutMap map[string]models.Nutrient) {
     <div class="recipe">
         <input type="text" value={ recipe.Name } 
         name="recipe-name"
@@ -63,7 +84,7 @@ templ RecipeDisplay(recipe models.Recipe, nutrients []models.Nutrient) {
         <details>
             <summary>Nutrition</summary>
             {{
-                nutAmounts := make(map[int64]unit.Mass, len(nutrients))
+                nutAmounts := make(map[int64]unit.Mass, len(nutMap))
 
                 for _, ingredient := range recipe.Ingredients {
                     for _, nut := range ingredient.FoodToUse.Nutrients {
@@ -74,30 +95,19 @@ templ RecipeDisplay(recipe models.Recipe, nutrients []models.Nutrient) {
                 }
             }}
 
-            <table>
-                <thead>
-                    <tr>
-                        <th>Nutrient</th>
-                        <th>Amount</th>
-                    </tr>
-                </thead>
-                <tbody>
-                for _, nut := range nutrients {
-                    if nutAmounts[nut.ID] > 0.0 {
-                        <tr>
-                            <td>{ nut.Name }</td>
-                            <td>{ models.FormatMass(nutAmounts[nut.ID]) }</td>
-                        </tr>
-                    }
-                }
-                </tbody>
-            </table>
+            @NutritionDisplay(nutMap, nutAmounts)
         </details>
         <button hx-post={"/delete-recipe?id=" + strconv.FormatInt(int64(recipe.ID), 10)} hx-target="this" hx-swap="delete">Delete Recipe</button>
     </div>
 }
 
 templ Diet(dbloaded bool, recipes []models.Recipe, nutrients []models.Nutrient) {
+    {{
+        nutMap := make(map[string]models.Nutrient, len(nutrients))
+        for _, nut := range nutrients {
+            nutMap[nut.Name] = nut
+        }
+    }}
     <html>
     <head>
         <title>Diet</title>
@@ -127,7 +137,7 @@ templ Diet(dbloaded bool, recipes []models.Recipe, nutrients []models.Nutrient) 
             <h2>Recipes</h2>
             <div id="recipes-list">
             for _, recipe := range recipes {
-                @RecipeDisplay(recipe, nutrients)
+                @RecipeDisplay(recipe, nutMap)
             }
             </div>
             <form hx-post="/add-recipe" hx-target="#recipes-list">
