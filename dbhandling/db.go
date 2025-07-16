@@ -80,14 +80,47 @@ func InitDB() error {
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		name TEXT NOT NULL,
 		age INTEGER,
+		is_male INTEGER,
 		weight_kg REAL,
 		height_cm REAL,
-		body_fat_percent REAL
+		body_fat_percent REAL,
+		target_body_fat_percent REAL
 		);
 	CREATE TABLE IF NOT EXISTS diet_days (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		name TEXT NOT NULL
-	);`
+		);
+	CREATE TABLE IF NOT EXISTS diet_day_recipes (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		diet_day_id INTEGER NOT NULL,
+		recipe_id INTEGER NOT NULL,
+		FOREIGN KEY (diet_day_id) REFERENCES diet_days(id),
+		FOREIGN KEY (recipe_id) REFERENCES recipes(id)
+		);
+	CREATE TABLE IF NOT EXISTS diet_weeks (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL
+		);
+	CREATE TABLE IF NOT EXISTS diet_week_days (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		diet_week_id INTEGER NOT NULL,
+		diet_day_id INTEGER NOT NULL,
+		FOREIGN KEY (diet_day_id) REFERENCES diet_days(id),
+		FOREIGN KEY (diet_week_id) REFERENCES diet_weeks(id)
+		);
+	CREATE TABLE IF NOT EXISTS excercises (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL,
+		METS INTEGER NOT NULL
+		);
+	CREATE TABLE IF NOT EXISTS diet_day_exercises (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		diet_day_id INTEGER NOT NULL,
+		exercise_id INTEGER NOT NULL,
+		duration REAL NOT NULL,
+		FOREIGN KEY (diet_day_id) REFERENCES diet_days(id),
+		FOREIGN KEY (exercise_id) REFERENCES excercises(id)
+		);`
 
 	_, err = NutritionDB.Exec(initStatement)
 
@@ -96,7 +129,21 @@ func InitDB() error {
 		return err
 	}
 
-	NutdbInitted = true
+	rows, err := NutritionDB.Query("SELECT COUNT (*) FROM foods;")
+
+	if err != nil {
+		NutdbInitted = false
+	} else {
+		defer rows.Close()
+		rows.Next()
+		var count int
+		err = rows.Scan(&count)
+		NutdbInitted = err == nil && count > 0
+
+		if !NutdbInitted {
+			fmt.Printf("%v\n", err)
+		}
+	}
 
 	return nil
 }

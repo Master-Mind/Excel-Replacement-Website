@@ -38,10 +38,19 @@ type Recipe struct {
 	Ingredients []Ingredient
 }
 
+type Exercise struct {
+	ID   int64
+	Name string
+	METS float32
+}
+
 type DietDay struct {
-	Name  string
-	Meals []Recipe // Meals for the day, e.g., breakfast, lunch, dinner
-	Foods []Food   // in addition to meals, in case there are snacks or other foods
+	ID        int64
+	Name      string
+	Meals     []Recipe // Meals for the day, e.g., breakfast, lunch, dinner
+	Foods     []Food   // in addition to meals, in case there are snacks or other foods
+	Exercises []Exercise
+	Durations []float64
 }
 
 type Person struct {
@@ -49,7 +58,7 @@ type Person struct {
 	Age                  uint
 	IsMale               bool
 	Height               unit.Length
-	Weight               unit.Length
+	Weight               unit.Mass
 	BodyFatPercent       float32
 	TargetBodyFatPercent float32
 } // Add other fields as necessary

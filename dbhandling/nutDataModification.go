@@ -14,8 +14,9 @@ import (
 
 const Pound = unit.Mass(0.45359237)
 const Ounce = unit.Mass(0.02834952)
-const IU = unit.Mass(0.00000001)   // International Unit, used for vitamins and some minerals, technically not valid because it varies by substance, but used here for simplicity
-const Calorie = unit.Energy(4.184) // 1 Calorie = 4.184 Joules
+const IU = unit.Mass(0.00000001)     // International Unit, used for vitamins and some minerals, technically not valid because it varies by substance, but used here for simplicity
+const Calorie = unit.Energy(4.184)   // 1 Calorie = 4.184 Joules
+const Centimeter = unit.Length(0.01) // 1 cm = 0.01 m
 
 func MakeGonumMass(amount float64, unitStr string) (unit.Mass, error) {
 
@@ -63,7 +64,7 @@ func getNutrients() ([]models.Nutrient, error) {
 	defer rows.Close()
 	for rows.Next() {
 		var nutrient models.Nutrient
-		var dailyValue sql.NullInt64
+		var dailyValue sql.NullFloat64
 		var dvUnit string
 
 		if err := rows.Scan(&nutrient.ID, &nutrient.Name, &dvUnit, &dailyValue); err != nil {
@@ -71,10 +72,10 @@ func getNutrients() ([]models.Nutrient, error) {
 		}
 
 		if dailyValue.Valid {
-			nutrient.DailyValue, err = MakeGonumMass(float64(dailyValue.Int64), dvUnit) // Convert to gonum unit
+			nutrient.DailyValue, err = MakeGonumMass(dailyValue.Float64, dvUnit) // Convert to gonum unit
 			if err != nil {
 				//try to convert energy
-				nutrient.DVEnergy, err = MakeGonumEnergy(float64(dailyValue.Int64), dvUnit)
+				nutrient.DVEnergy, err = MakeGonumEnergy(dailyValue.Float64, dvUnit)
 
 				if err != nil {
 					//ignore the error, set DailyValue to 0
@@ -240,13 +241,24 @@ func DietPageHandler(w http.ResponseWriter, r *http.Request) {
 
 						foodNutrient.Amount, err = MakeGonumMass(amount, unitStr) // Convert to gonum unit
 						if err != nil {
-							//ignore the error, set Amount to 0
-							fmt.Printf("Error converting amount for nutrient ID %d: %v, setting to 0\n", foodNutrient.NutrientID, err)
-							foodNutrient.Amount = 0
+							_, err := MakeGonumEnergy(amount, unitStr)
+
+							if err != nil {
+								//ignore the error, set Amount to 0
+								fmt.Printf("Error converting amount for nutrient ID %d: %v, setting to 0\n", foodNutrient.NutrientID, err)
+								foodNutrient.Amount = 0
+							} else {
+								foodNutrient.Amount = unit.Mass(amount)
+							}
 						}
 
 						// Find the nutrient by ID
-						foodNutrient.Nutrient = nutrients[foodNutrient.NutrientID-1] // Assuming nutrient IDs are sequential
+						foodNutrient.Nutrient = nutrients[foodNutrient.NutrientID] // Assuming nutrient IDs are sequential
+
+						//if foodNutrient.NutrientID == 80 {
+						//	fmt.Printf("Energy: %f, Ingredient: %f, Ingredient Amount: %f, Nutrient Name: %s\n",
+						//		foodNutrient.Amount, recipe.Ingredients[i].FoodToUse.Description, recipe.Ingredients[i].Amount, foodNutrient.Nutrient.Name)
+						//}
 
 						recipe.Ingredients[i].FoodToUse.Nutrients = append(recipe.Ingredients[i].FoodToUse.Nutrients, foodNutrient)
 					}
@@ -260,7 +272,102 @@ func DietPageHandler(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	comp := templs.Diet(NutdbInitted, recipes, nutrients)
+	// Fetch person data
+	person, err := getPerson()
+	if err != nil {
+		HandleError(w, r, "Error fetching person data: %v", err)
+		return
+	}
+
+	// Fetch diet days
+	var dietDays []models.DietDay
+	rows, err = NutritionDB.Query("SELECT * FROM diet_days")
+
+	if HandleError(w, r, "Error fetching diet days: %v", err) {
+		return
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		var dietDay models.DietDay
+		if err := rows.Scan(&dietDay.ID, &dietDay.Name); err != nil {
+			HandleError(w, r, "Error scanning diet day: %v", err)
+			return
+		}
+
+		dietDays = append(dietDays, dietDay)
+	}
+
+	//match the diet days to the exercises
+	var exercises []models.Exercise
+	rows, err = NutritionDB.Query("SELECT * FROM excercises")
+
+	if HandleError(w, r, "Error fetching exercises: %v", err) {
+		return
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		var exercise models.Exercise
+		if err := rows.Scan(&exercise.ID, &exercise.Name, &exercise.METS); err != nil {
+			HandleError(w, r, "Error scanning exercise: %v", err)
+			return
+		}
+
+		exercises = append(exercises, exercise)
+	}
+
+	//match the diet days to the exercises
+	rows, err = NutritionDB.Query("SELECT diet_day_id, exercise_id, duration FROM diet_day_exercises")
+	if HandleError(w, r, "Error fetching diet day exercises: %v", err) {
+		return
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		var dietDayID int64
+		var exerciseID int64
+		var duration float64
+
+		if err := rows.Scan(&dietDayID, &exerciseID, &duration); err != nil {
+			HandleError(w, r, "Error scanning diet day exercise: %v", err)
+			return
+		}
+
+		for i, dietDay := range dietDays {
+			if dietDay.ID == dietDayID {
+				dietDays[i].Exercises = append(dietDays[i].Exercises, exercises[exerciseID-1])
+				dietDays[i].Durations = append(dietDays[i].Durations, duration)
+				break
+			}
+		}
+	}
+
+	//match the diet days to the recipes
+	rows, err = NutritionDB.Query("SELECT diet_day_id, recipe_id FROM diet_day_recipes")
+
+	if HandleError(w, r, "Error fetching diet day recipes: %v", err) {
+		return
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		var dietDayID int64
+		var recipeID int64
+		if err := rows.Scan(&dietDayID, &recipeID); err != nil {
+			HandleError(w, r, "Error scanning diet day recipe: %v", err)
+			return
+		}
+
+		for _, recipe := range recipes {
+			if recipe.ID == recipeID {
+				dietDays[dietDayID-1].Meals = append(dietDays[dietDayID-1].Meals, recipe)
+				break
+			}
+		}
+	}
+
+	comp := templs.Diet(NutdbInitted, recipes, nutrients, person, dietDays, exercises)
 
 	if err := comp.Render(r.Context(), w); err != nil {
 		fmt.Printf("Error rendering diet page: %v\n", err)
@@ -450,14 +557,14 @@ func UpdateIngredientAmount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ingredientID := r.FormValue("id")
-	newAmount := r.FormValue("ingredient-amount")
+	newAmount, err := models.ParseMass(r.FormValue("ingredient-amount"))
 
-	if ingredientID == "" || newAmount == "" {
+	if ingredientID == "" || err != nil {
 		http.Error(w, "Ingredient ID and new amount are required", http.StatusBadRequest)
 		return
 	}
 
-	_, err = NutritionDB.Exec("UPDATE ingredients SET amount_g = ? WHERE id = ?", newAmount, ingredientID)
+	_, err = NutritionDB.Exec("UPDATE ingredients SET amount_g = ? WHERE id = ?", float64(newAmount)*1000, ingredientID)
 
 	if err != nil {
 		HandleError(w, r, "Error updating ingredient amount: %v", err)
@@ -465,6 +572,231 @@ func UpdateIngredientAmount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Printf("Updated ingredient ID %s to new amount: %s\n", ingredientID, newAmount)
+
+	w.WriteHeader(http.StatusOK) // Send a 200 OK response to indicate success
+}
+
+func getPerson() (models.Person, error) {
+	var person models.Person
+	row := NutritionDB.QueryRow("SELECT name, age, is_male, height_cm, weight_kg, body_fat_percent, target_body_fat_percent FROM person LIMIT 1")
+
+	var heightCm, weightKg float64
+	err := row.Scan(&person.Name, &person.Age, &person.IsMale, &heightCm, &weightKg, &person.BodyFatPercent, &person.TargetBodyFatPercent)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// Return default person if no record exists
+			return models.Person{
+				Name:                 "User",
+				Age:                  25,
+				IsMale:               true,
+				Height:               175.0 / unit.Centi,
+				Weight:               70.0 * unit.Kilogram,
+				BodyFatPercent:       15.0,
+				TargetBodyFatPercent: 10.0,
+			}, nil
+		}
+		return person, err
+	}
+
+	// Convert database values to gonum units
+	person.Height = unit.Length(heightCm) * unit.Centi
+	person.Weight = unit.Mass(weightKg) * unit.Kilogram
+
+	return person, nil
+}
+
+func UpdatePerson(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if HandleError(w, r, "Error parsing form: %v", err) {
+		return
+	}
+
+	name := r.FormValue("name")
+	ageStr := r.FormValue("age")
+	isMaleStr := r.FormValue("is_male")
+	heightStr := r.FormValue("height")
+	weightStr := r.FormValue("weight")
+	bodyFatStr := r.FormValue("body_fat_percent")
+	targetBodyFatStr := r.FormValue("target_body_fat_percent")
+
+	age, err := strconv.ParseUint(ageStr, 10, 32)
+	if HandleError(w, r, "Error parsing age: %v", err) {
+		return
+	}
+
+	isMale, err := strconv.ParseBool(isMaleStr)
+	if HandleError(w, r, "Error parsing gender: %v", err) {
+		return
+	}
+
+	height, err := strconv.ParseFloat(heightStr, 64)
+	if HandleError(w, r, "Error parsing height: %v", err) {
+		return
+	}
+
+	weight, err := strconv.ParseFloat(weightStr, 64)
+	if HandleError(w, r, "Error parsing weight: %v", err) {
+		return
+	}
+
+	bodyFat, err := strconv.ParseFloat(bodyFatStr, 32)
+	if HandleError(w, r, "Error parsing body fat: %v", err) {
+		return
+	}
+
+	targetBodyFat, err := strconv.ParseFloat(targetBodyFatStr, 32)
+	if HandleError(w, r, "Error parsing target body fat: %v", err) {
+		return
+	}
+
+	// Check if person exists
+	var count int
+	err = NutritionDB.QueryRow("SELECT COUNT(*) FROM person").Scan(&count)
+	if HandleError(w, r, "Error checking person existence: %v", err) {
+		return
+	}
+
+	if count == 0 {
+		// Insert new person
+		fmt.Printf("Inserting new person: %s\n", name)
+		_, err = NutritionDB.Exec("INSERT INTO person (name, age, is_male, height_cm, weight_kg, body_fat_percent, target_body_fat_percent) VALUES (?, ?, ?, ?, ?, ?, ?)",
+			name, age, isMale, height, weight, bodyFat, targetBodyFat)
+	} else {
+		// Update existing person
+		fmt.Printf("Updating person: %s\n", name)
+		_, err = NutritionDB.Exec("UPDATE person SET name = ?, age = ?, is_male = ?, height_cm = ?, weight_kg = ?, body_fat_percent = ?, target_body_fat_percent = ? WHERE id = (SELECT id FROM person LIMIT 1)",
+			name, age, isMale, height, weight, bodyFat, targetBodyFat)
+	}
+
+	if HandleError(w, r, "Error updating person: %v", err) {
+		return
+	}
+
+	fmt.Printf("Updated person: %s\n", name)
+
+	// Return updated person editor
+	person := models.Person{
+		Name:                 name,
+		Age:                  uint(age),
+		IsMale:               isMale,
+		Height:               unit.Length(height) * unit.Centi,
+		Weight:               unit.Mass(weight) * unit.Kilogram,
+		BodyFatPercent:       float32(bodyFat),
+		TargetBodyFatPercent: float32(targetBodyFat),
+	}
+
+	comp := templs.PersonEditor(person)
+	comp.Render(r.Context(), w)
+}
+
+func AddDietDay(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if HandleError(w, r, "Error parsing form: %v", err) {
+		return
+	}
+
+	name := r.FormValue("name")
+
+	if name == "" {
+		http.Error(w, "Name is required", http.StatusBadRequest)
+		return
+	}
+
+	_, err = NutritionDB.Exec("INSERT INTO diet_days (name) VALUES (?)", name)
+
+	if err != nil {
+		HandleError(w, r, "Error creating diet day: %v", err)
+		return
+	}
+
+	fmt.Printf("Created new diet day: %s\n", name)
+
+	w.WriteHeader(http.StatusOK) // Send a 200 OK response to indicate success
+}
+
+func DeleteDietDay(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if HandleError(w, r, "Error parsing form: %v", err) {
+		return
+	}
+
+	dietDayID := r.FormValue("id")
+
+	if dietDayID == "" {
+		http.Error(w, "Diet day ID is required", http.StatusBadRequest)
+		return
+	}
+
+	_, err = NutritionDB.Exec("DELETE FROM diet_days WHERE id = ?", dietDayID)
+
+	if err != nil {
+		HandleError(w, r, "Error deleting diet day: %v", err)
+		return
+	}
+
+	fmt.Printf("Deleted diet day with ID: %s\n", dietDayID)
+
+	w.WriteHeader(http.StatusOK) // Send a 200 OK response to indicate success
+}
+
+func UpdateDietDay(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if HandleError(w, r, "Error parsing form: %v", err) {
+		return
+	}
+
+	dietDayID := r.FormValue("id")
+	newName := r.FormValue("name")
+
+	if dietDayID == "" || newName == "" {
+		http.Error(w, "Diet day ID and new name are required", http.StatusBadRequest)
+		return
+	}
+
+	_, err = NutritionDB.Exec("UPDATE diet_days SET name = ? WHERE id = ?", newName, dietDayID)
+
+	if err != nil {
+		HandleError(w, r, "Error updating diet day: %v", err)
+		return
+	}
+
+	newMeal := r.FormValue("new-meal")
+
+	if newMeal == "" {
+		http.Error(w, "Meal is required", http.StatusBadRequest)
+		return
+	}
+
+	_, err = NutritionDB.Exec("INSERT INTO diet_day_recipes (diet_day_id, recipe_id) VALUES (?, ?)", dietDayID, newMeal)
+
+	if err != nil {
+		HandleError(w, r, "Error adding meal to diet day: %v", err)
+		return
+	}
+
+	newExercise := r.FormValue("new-exercise")
+
+	if newExercise == "" {
+		http.Error(w, "Exercise is required", http.StatusBadRequest)
+		return
+	}
+
+	duration, err := strconv.ParseFloat(r.FormValue("duration"), 64)
+
+	if err != nil {
+		HandleError(w, r, "Error parsing duration: %v", err)
+		return
+	}
+
+	_, err = NutritionDB.Exec("INSERT INTO diet_day_exercises (diet_day_id, exercise_id, duration) VALUES (?, ?, ?)", dietDayID, newExercise, duration)
+
+	if err != nil {
+		HandleError(w, r, "Error adding exercise to diet day: %v", err)
+		return
+	}
+
+	fmt.Printf("Updated diet day ID %s to new name: %s\n", dietDayID, newName)
 
 	w.WriteHeader(http.StatusOK) // Send a 200 OK response to indicate success
 }

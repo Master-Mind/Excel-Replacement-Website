@@ -108,6 +108,10 @@ func TransformNutritionData(nutdb *sql.DB) error {
 
 			nutrientAmount := nutrientItem["amount"].(float64)
 
+			if nutrientName == "Potassium, K" && foodID == 1 {
+				fmt.Printf("Potassium, K: %f\n", nutrientAmount)
+			}
+
 			nut, hasNut := nutrientMap[nutrientName]
 
 			// Energy has two entries, one for kcal and one for kJ. We only want kcal.
@@ -127,20 +131,22 @@ func TransformNutritionData(nutdb *sql.DB) error {
 					continue
 				}
 
-				nutrientID++
-
 				nut.ID = int64(nutrientID)
+
+				nutrientID++
 
 				nutrientMap[nutrientName] = nut
 			}
 
-			amountNum := float64(nutrientAmount)
-
-			if amountNum < 0.01 {
+			if nutrientAmount < 0.01 {
 				continue
 			}
 
-			_, err := foodNutInsertStmt.Exec(foodNutrientID, foodID, nut.ID, amountNum, nutrientUnit)
+			//if nutrientName == "Potassium, K" && foodID == 1 {
+			//	fmt.Printf("Food Nut ID %d, Food ID %d, Nutrient ID %d, Amount %f, Unit %s\n", foodNutrientID, foodID, nut.ID, nutrientAmount, nutrientUnit)
+			//}
+
+			_, err := foodNutInsertStmt.Exec(foodNutrientID, foodID, nut.ID, nutrientAmount, nutrientUnit)
 
 			foodNutrientID++
 

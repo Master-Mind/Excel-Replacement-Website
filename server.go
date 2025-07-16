@@ -60,6 +60,10 @@ func main() {
 	http.HandleFunc("/add-ingredient", dbhandling.AddIngredient)
 	http.HandleFunc("/update-ingredient-amount", dbhandling.UpdateIngredientAmount)
 	http.HandleFunc("/delete-ingredient", dbhandling.DeleteIngredient)
+	http.HandleFunc("/update-person", dbhandling.UpdatePerson)
+	http.HandleFunc("/add-diet-day", dbhandling.AddDietDay)
+	http.HandleFunc("/delete-diet-day", dbhandling.DeleteDietDay)
+	http.HandleFunc("/update-diet-day", dbhandling.UpdateDietDay)
 
 	server := &http.Server{Addr: ":80"}
 
