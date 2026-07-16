@@ -326,3 +326,38 @@ func AddNutritionData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func RecentSetsHandler(w http.ResponseWriter, r *http.Request) {
+	setTypeIDStr := r.FormValue("set-type")
+	if setTypeIDStr == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	id, err := strconv.ParseUint(setTypeIDStr, 10, 64)
+	if HandleError(w, r, "Error parsing set-type: %v", err) {
+		return
+	}
+
+	var setType models.SetType
+	err = DB.First(&setType, id).Error
+	if HandleError(w, r, "Error finding set type: %v", err) {
+		return
+	}
+
+	var sets []models.Set
+	err = DB.
+		Preload("SetType").
+		Preload("Workout").
+		Joins("JOIN workouts ON workouts.id = sets.workout_id").
+		Where("sets.set_type_id = ?", id).
+		Order("workouts.date desc").
+		Limit(5).
+		Find(&sets).Error
+	if HandleError(w, r, "Error finding recent sets: %v", err) {
+		return
+	}
+
+	comp := templs.RecentSets(sets, setType)
+	comp.Render(r.Context(), w)
+}

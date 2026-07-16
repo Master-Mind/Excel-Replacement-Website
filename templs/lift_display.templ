@@ -21,6 +21,49 @@ templ LiftRow(set models.Set, lastOfPage bool) {
     </tr>
 }
 
+templ RecentSets(sets []models.Set, settype models.SetType) {
+    if len(sets) > 0 {
+        <div class="recent-sets">
+            <h4>Last 5 { settype.Name }</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>{ settype.IntensityUnit }</th>
+                        <th>{ settype.RepUnit }</th>
+                        <th>Date</th>
+                        if settype.IntensityUnit == "lbs" {
+                            <th>One Rep Max Estimate</th>
+                            <th>One Rep Max Percent</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    for _, set := range sets {
+                        <tr>
+                            <td>{ strconv.Itoa(set.Intensity) }</td>
+                            <td>{ strconv.Itoa(set.Reps) }</td>
+                            <td>{ set.Workout.Date.Format("2006-01-02") }</td>
+                            if settype.IntensityUnit == "lbs" {
+                                if set.Reps < 1 || set.Reps >= len(oneRepMaxPercents) {
+                                    <td>0</td>
+                                    <td>0%</td>
+                                } else {
+                                    <td>{ strconv.FormatFloat(float64(set.Intensity) / float64(oneRepMaxPercents[set.Reps]), 'f', 2, 64) }</td>
+                                    <td>{ strconv.FormatFloat(float64(oneRepMaxPercents[set.Reps]) * 100, 'f', 2, 64) }%</td>
+                                }
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    } else {
+        <div class="recent-sets">
+            <h4>No prior { settype.Name } sets</h4>
+        </div>
+    }
+}
+
 templ WorkoutDisplay(workout models.Workout, settypes []models.SetType, lastOfPage bool) {
     <div>
     if lastOfPage {
@@ -36,7 +79,7 @@ templ WorkoutDisplay(workout models.Workout, settypes []models.SetType, lastOfPa
     <form id="new-set" hx-post="/new-set" hx-target="next div" hx-swap="afterbegin">
         <div class="form-group">
             <label for="set-type">Set Type</label>
-            <select id="set-type" name="set-type">
+            <select id="set-type" name="set-type" hx-get="/recent-sets" hx-target="#recent-sets" hx-trigger="change">
                 for _, settype := range settypes {
                     <option value={ strconv.FormatUint(uint64(settype.ID), 10) }>{ settype.Name }</option>
                 }
@@ -49,6 +92,7 @@ templ WorkoutDisplay(workout models.Workout, settypes []models.SetType, lastOfPa
         <button type="submit" hx-post="/new-set" hx-target="next div" hx-swap="afterbegin">Add Set</button>
         </div>
     </form>
+    <div id="recent-sets"></div>
     if len(settypes) > 0 {
         {{
         includedSetType := make([][]models.Set, len(settypes))

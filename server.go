@@ -64,8 +64,9 @@ func main() {
 	http.HandleFunc("/add-diet-day", dbhandling.AddDietDay)
 	http.HandleFunc("/delete-diet-day", dbhandling.DeleteDietDay)
 	http.HandleFunc("/update-diet-day", dbhandling.UpdateDietDay)
+	http.HandleFunc("/recent-sets", dbhandling.RecentSetsHandler)
 
-	server := &http.Server{Addr: ":80"}
+	server := &http.Server{Addr: ":8080"}
 
 	// Goroutine to listen for shutdown signals
 	go func() {
@@ -78,7 +79,7 @@ func main() {
 		}
 	}()
 
-	fmt.Println("Server is listening at port 80...")
+	fmt.Println("Server is listening at port 8080...")
 	if err := server.ListenAndServe(); err != http.ErrServerClosed {
 		fmt.Printf("Server error: %v\n", err)
 	}
